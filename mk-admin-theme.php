@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MK_ADMIN_THEME_VERSION', '1.0.18' );
+define( 'MK_ADMIN_THEME_VERSION', '1.0.19' );
 define( 'MK_ADMIN_THEME_URL',     plugin_dir_url( __FILE__ ) );
 define( 'MK_ADMIN_THEME_PATH',    plugin_dir_path( __FILE__ ) );
 
@@ -57,6 +57,10 @@ function mk_admin_theme_defaults() {
         // Integrations – Gutenberg
         'gutenberg_title_only'       => '0',
         'gutenberg_title_only_types' => 'post',
+        // Integrations – Gutenberg block restriction
+        'gutenberg_restrict_blocks'           => '0',
+        'gutenberg_restrict_blocks_types'     => 'post',
+        'gutenberg_restrict_blocks_whitelist' => '',
         // Integrations – Sidebar resize
         'sidebar_resize'             => '0',
         'sidebar_resize_types'       => 'post, page',
@@ -276,8 +280,8 @@ add_action( 'admin_init', 'mk_admin_theme_register_settings' );
 
 function mk_admin_theme_sanitize( $input ) {
     $defaults     = mk_admin_theme_defaults();
-    $bool_fields  = [ 'sync_elementor_gutenberg', 'sync_elementor_acf', 'gutenberg_title_only', 'sidebar_resize' ];
-    $text_fields  = [ 'gutenberg_title_only_types', 'sidebar_resize_types' ];
+    $bool_fields  = [ 'sync_elementor_gutenberg', 'sync_elementor_acf', 'gutenberg_title_only', 'gutenberg_restrict_blocks', 'sidebar_resize' ];
+    $text_fields  = [ 'gutenberg_title_only_types', 'gutenberg_restrict_blocks_types', 'gutenberg_restrict_blocks_whitelist', 'sidebar_resize_types' ];
     $url_fields   = [ 'sidebar_resize_logo' ];
     $output       = [];
 
@@ -478,6 +482,55 @@ function mk_admin_theme_settings_page() {
                             class="regular-text"
                         />
                         <p class="description"><?php printf( esc_html__( 'Post type separati da virgola (es. %s). Attivo solo se la modalità è abilitata.', 'mk-admin-theme' ), '<code>post, film, prodotto</code>' ); ?></p>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- Gutenberg block restriction -->
+            <h2><?php esc_html_e( 'Restrizione blocchi Gutenberg', 'mk-admin-theme' ); ?></h2>
+            <table class="form-table" role="presentation">
+                <tr>
+                    <th scope="row"><?php esc_html_e( 'Abilita restrizione blocchi', 'mk-admin-theme' ); ?></th>
+                    <td>
+                        <label>
+                            <input
+                                type="checkbox"
+                                name="mk_admin_theme_options[gutenberg_restrict_blocks]"
+                                value="1"
+                                <?php checked( mk_admin_theme_get( 'gutenberg_restrict_blocks' ), '1' ); ?>
+                            />
+                            <?php esc_html_e( 'Disabilita tutti i blocchi e i pattern — consenti solo i blocchi nella whitelist', 'mk-admin-theme' ); ?>
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="mk_gutenberg_restrict_blocks_types"><?php esc_html_e( 'Post type', 'mk-admin-theme' ); ?></label>
+                    </th>
+                    <td>
+                        <input
+                            type="text"
+                            id="mk_gutenberg_restrict_blocks_types"
+                            name="mk_admin_theme_options[gutenberg_restrict_blocks_types]"
+                            value="<?php echo esc_attr( mk_admin_theme_get( 'gutenberg_restrict_blocks_types' ) ); ?>"
+                            class="regular-text"
+                        />
+                        <p class="description"><?php printf( esc_html__( 'Post type separati da virgola (es. %s). Attivo solo se la restrizione è abilitata.', 'mk-admin-theme' ), '<code>post, film, prodotto</code>' ); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="mk_gutenberg_restrict_blocks_whitelist"><?php esc_html_e( 'Blocchi consentiti (whitelist)', 'mk-admin-theme' ); ?></label>
+                    </th>
+                    <td>
+                        <input
+                            type="text"
+                            id="mk_gutenberg_restrict_blocks_whitelist"
+                            name="mk_admin_theme_options[gutenberg_restrict_blocks_whitelist]"
+                            value="<?php echo esc_attr( mk_admin_theme_get( 'gutenberg_restrict_blocks_whitelist' ) ); ?>"
+                            class="large-text"
+                        />
+                        <p class="description"><?php printf( esc_html__( 'Nomi di blocchi separati da virgola (es. %s). Lascia vuoto per disabilitare tutti i blocchi.', 'mk-admin-theme' ), '<code>core/paragraph, core/image, core/heading</code>' ); ?></p>
                     </td>
                 </tr>
             </table>
@@ -1241,7 +1294,7 @@ function mk_admin_theme_sidebar_resize() {
 add_action( 'admin_head', 'mk_admin_theme_sidebar_resize' );
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Gutenberg – title-only mode (disable all blocks + patterns)
+// Gutenberg - title-only mode (disable all blocks + patterns)
 // ──────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -1347,6 +1400,54 @@ function mk_admin_theme_title_only_css() {
     <?php
 }
 add_action( 'admin_head', 'mk_admin_theme_title_only_css' );
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Gutenberg - block restriction mode (disable all + optional whitelist)
+// ──────────────────────────────────────────────────────────────────────────────
+
+function mk_admin_theme_restrict_blocks_post_types() {
+    $raw = mk_admin_theme_get( 'gutenberg_restrict_blocks_types' );
+    return array_filter( array_map( 'trim', explode( ',', $raw ) ) );
+}
+
+function mk_admin_theme_restrict_blocks_whitelist() {
+    $raw = mk_admin_theme_get( 'gutenberg_restrict_blocks_whitelist' );
+    return array_filter( array_map( 'trim', explode( ',', $raw ) ) );
+}
+
+function mk_admin_theme_restrict_blocks_filter( $allowed_blocks, $editor_context ) {
+    if ( mk_admin_theme_get( 'gutenberg_restrict_blocks' ) !== '1' ) {
+        return $allowed_blocks;
+    }
+
+    $post_type = $editor_context->post->post_type ?? '';
+    if ( ! $post_type || ! in_array( $post_type, mk_admin_theme_restrict_blocks_post_types(), true ) ) {
+        return $allowed_blocks;
+    }
+
+    $whitelist = mk_admin_theme_restrict_blocks_whitelist();
+    return empty( $whitelist ) ? [] : $whitelist;
+}
+add_filter( 'allowed_block_types_all', 'mk_admin_theme_restrict_blocks_filter', 15, 2 );
+
+function mk_admin_theme_restrict_blocks_patterns() {
+    if ( mk_admin_theme_get( 'gutenberg_restrict_blocks' ) !== '1' ) {
+        return;
+    }
+
+    $screen = get_current_screen();
+    if ( ! $screen || $screen->base !== 'post' ) {
+        return;
+    }
+
+    if ( ! in_array( $screen->post_type, mk_admin_theme_restrict_blocks_post_types(), true ) ) {
+        return;
+    }
+
+    remove_theme_support( 'core-block-patterns' );
+    add_filter( 'should_load_remote_block_patterns', '__return_false' );
+}
+add_action( 'current_screen', 'mk_admin_theme_restrict_blocks_patterns' );
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Dark / Light mode toggle

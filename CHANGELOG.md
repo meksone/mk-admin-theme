@@ -1,5 +1,13 @@
 # Changelog – MK Admin Theme
 
+## [1.0.19] – 2026-04-21
+### Added
+- New **Restrizione blocchi Gutenberg** section in settings: on/off toggle, post type list, and block whitelist (comma-separated block names)
+- `gutenberg_restrict_blocks`, `gutenberg_restrict_blocks_types`, `gutenberg_restrict_blocks_whitelist` options
+- `mk_admin_theme_restrict_blocks_filter()` — hooks `allowed_block_types_all` at priority 15; returns whitelist or empty array (all blocked)
+- `mk_admin_theme_restrict_blocks_patterns()` — disables core block patterns and remote pattern fetching for configured post types
+- Independent from title-only mode; both features can coexist (title-only wins on shared post types, runs at priority 10)
+
 ## [1.0.18] – 2026-04-05
 ### Fixed
 - ACF toolbar background: moved output to `admin_footer` (body end) so the `<style>` block physically appears after all `<head>` stylesheets; added `body.acf-admin-page` specificity prefix to match/beat ACF PRO's own two-class selectors
