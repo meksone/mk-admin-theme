@@ -267,12 +267,18 @@ body.mk-dark #wpfooter {
 
 /* ── Global font ── */
 html, body,
-#wpadminbar, #wpadminbar *:not(.dashicons):not([class*="dashicons"]),
+#wpadminbar, #wpadminbar *:not(.dashicons):not([class*="dashicons"]):not(.ab-icon),
 #adminmenuback, #adminmenuwrap, #adminmenu,
 .wp-submenu,
 #wpwrap, .wrap,
 input, select, textarea, button {
     font-family: var(--mk-font-family), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+/* Restore dashicons font for icon elements in admin bar */
+#wpadminbar .ab-icon,
+#wpadminbar .dashicons,
+#wpadminbar [class*="dashicons"] {
+    font-family: dashicons !important;
 }
 
 /* ── Page background ── */
@@ -284,7 +290,7 @@ input, select, textarea, button {
    ADMIN BAR (top toolbar)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 #wpadminbar,
-#wpadminbar *:not(.dashicons):not([class*="dashicons"]) {
+#wpadminbar *:not(.dashicons):not([class*="dashicons"]):not(.ab-icon) {
     font-family: var(--mk-font-family), sans-serif !important;
 }
 #wpadminbar {

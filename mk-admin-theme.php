@@ -3,7 +3,7 @@
  * Plugin Name: MK Admin Theme
  * Plugin URI:  https://meksone.com
  * Description: Custom WordPress admin theme with Poppins font, rounded corners, and a blue/yellow palette. Fully customizable via Settings > Impostazioni tema admin.
- * Version:     1.0.28
+ * Version:     1.0.29
  * Author:      Manuel Serrenti (meksONE)
  * Author URI:  https://meksone.com
  * License:     GPL-2.0+
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MK_ADMIN_THEME_VERSION', '1.0.28' );
+define( 'MK_ADMIN_THEME_VERSION', '1.0.29' );
 define( 'MK_ADMIN_THEME_URL',     plugin_dir_url( __FILE__ ) );
 define( 'MK_ADMIN_THEME_PATH',    plugin_dir_path( __FILE__ ) );
 
@@ -192,7 +192,7 @@ add_action( 'wp_enqueue_scripts', function () {
     }
     $font = mk_admin_theme_get( 'font_family' ) ?: 'Poppins';
     wp_enqueue_style( 'mk-admin-font-frontend', mk_admin_theme_get_font_url( $font ), [], null );
-    wp_add_inline_style( 'mk-admin-font-frontend', '#wpadminbar, #wpadminbar *:not(.dashicons):not([class*="dashicons"]) { font-family: \'' . esc_attr( $font ) . '\', sans-serif !important; }' );
+    wp_add_inline_style( 'mk-admin-font-frontend', '#wpadminbar, #wpadminbar *:not(.dashicons):not([class*="dashicons"]):not(.ab-icon) { font-family: \'' . esc_attr( $font ) . '\', sans-serif !important; } #wpadminbar .ab-icon, #wpadminbar .dashicons, #wpadminbar [class*="dashicons"] { font-family: dashicons !important; }' );
 } );
 
 function mk_admin_theme_css_vars() {
