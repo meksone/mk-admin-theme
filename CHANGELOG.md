@@ -1,5 +1,9 @@
 # Changelog – MK Admin Theme
 
+## [1.0.27] – 2026-04-22
+### Fixed
+- Admin bar font now applies to all children: added `#wpadminbar *` selector so WP core's child-element rules (`.ab-item`, `a`, etc.) are overridden
+
 ## [1.0.26] – 2026-04-22
 ### Fixed
 - Frontend admin bar now uses selected font: `wp_enqueue_scripts` hook loads Google Font and injects `font-family` inline for `#wpadminbar` when admin bar is visible

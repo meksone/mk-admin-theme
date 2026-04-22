@@ -267,7 +267,7 @@ body.mk-dark #wpfooter {
 
 /* ── Global font ── */
 html, body,
-#wpadminbar,
+#wpadminbar, #wpadminbar *,
 #adminmenuback, #adminmenuwrap, #adminmenu,
 .wp-submenu,
 #wpwrap, .wrap,
@@ -283,9 +283,12 @@ input, select, textarea, button {
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    ADMIN BAR (top toolbar)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#wpadminbar,
+#wpadminbar * {
+    font-family: var(--mk-font-family), sans-serif !important;
+}
 #wpadminbar {
     background: var(--mk-bg-topbar) !important;
-    font-family: var(--mk-font-family), sans-serif !important;
 }
 
 #wpadminbar .ab-item, #wpadminbar a {
