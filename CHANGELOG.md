@@ -1,5 +1,9 @@
 # Changelog – MK Admin Theme
 
+## [1.0.26] – 2026-04-22
+### Fixed
+- Frontend admin bar now uses selected font: `wp_enqueue_scripts` hook loads Google Font and injects `font-family` inline for `#wpadminbar` when admin bar is visible
+
 ## [1.0.25] – 2026-04-22
 ### Added
 - Font family selector in settings (Tipografia section): choose between Poppins, Lexend, Montserrat; loads selected Google Font dynamically and applies via `--mk-font-family` CSS variable across all admin UI

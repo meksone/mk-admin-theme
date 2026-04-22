@@ -3,7 +3,7 @@
  * Plugin Name: MK Admin Theme
  * Plugin URI:  https://meksone.com
  * Description: Custom WordPress admin theme with Poppins font, rounded corners, and a blue/yellow palette. Fully customizable via Settings > Impostazioni tema admin.
- * Version:     1.0.25
+ * Version:     1.0.26
  * Author:      Manuel Serrenti (meksONE)
  * Author URI:  https://meksone.com
  * License:     GPL-2.0+
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MK_ADMIN_THEME_VERSION', '1.0.25' );
+define( 'MK_ADMIN_THEME_VERSION', '1.0.26' );
 define( 'MK_ADMIN_THEME_URL',     plugin_dir_url( __FILE__ ) );
 define( 'MK_ADMIN_THEME_PATH',    plugin_dir_path( __FILE__ ) );
 
@@ -184,6 +184,16 @@ add_action( 'admin_enqueue_scripts', 'mk_admin_theme_enqueue' );
 
 // Also apply to login page
 add_action( 'login_enqueue_scripts', 'mk_admin_theme_enqueue' );
+
+// Frontend admin bar: load font + CSS vars so #wpadminbar inherits the right font.
+add_action( 'wp_enqueue_scripts', function () {
+    if ( ! is_admin_bar_showing() ) {
+        return;
+    }
+    $font = mk_admin_theme_get( 'font_family' ) ?: 'Poppins';
+    wp_enqueue_style( 'mk-admin-font-frontend', mk_admin_theme_get_font_url( $font ), [], null );
+    wp_add_inline_style( 'mk-admin-font-frontend', '#wpadminbar, #wpadminbar * { font-family: \'' . esc_attr( $font ) . '\', sans-serif !important; }' );
+} );
 
 function mk_admin_theme_css_vars() {
     $allowed_fonts = [ 'Poppins', 'Lexend', 'Montserrat' ];
