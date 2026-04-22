@@ -1,5 +1,9 @@
 # Changelog – MK Admin Theme
 
+## [1.0.31] – 2026-04-23
+### Fixed
+- Admin bar WP logo links now fully removed: iterate `get_nodes()` to strip all children of `wp-logo`/`wp-logo-external` dynamically — catches `contribute` and any other node added by current/future WP versions
+
 ## [1.0.30] – 2026-04-22
 ### Added
 - New settings section "Link favicon barra superiore": textarea for custom admin bar links (`Etichetta|URL`, one per line); default WP logo sub-links always removed via `admin_bar_menu` hook at priority 999; custom links injected under `wp-logo` node with `target="_blank"`

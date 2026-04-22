@@ -3,7 +3,7 @@
  * Plugin Name: MK Admin Theme
  * Plugin URI:  https://meksone.com
  * Description: Custom WordPress admin theme with Poppins font, rounded corners, and a blue/yellow palette. Fully customizable via Settings > Impostazioni tema admin.
- * Version:     1.0.30
+ * Version:     1.0.31
  * Author:      Manuel Serrenti (meksONE)
  * Author URI:  https://meksone.com
  * License:     GPL-2.0+
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MK_ADMIN_THEME_VERSION', '1.0.30' );
+define( 'MK_ADMIN_THEME_VERSION', '1.0.31' );
 define( 'MK_ADMIN_THEME_URL',     plugin_dir_url( __FILE__ ) );
 define( 'MK_ADMIN_THEME_PATH',    plugin_dir_path( __FILE__ ) );
 
@@ -386,13 +386,13 @@ add_action( 'admin_footer', 'mk_admin_theme_acf_toolbar_css', 9999 );
 // Admin bar: remove default WP logo links, inject custom links
 // ──────────────────────────────────────────────────────────────────────────────
 add_action( 'admin_bar_menu', function ( $wp_admin_bar ) {
-    // Always remove WP default sub-links under the logo.
+    // Remove ALL children of wp-logo (catches any WP version's nodes).
+    foreach ( $wp_admin_bar->get_nodes() as $id => $node ) {
+        if ( $node->parent === 'wp-logo' || $node->parent === 'wp-logo-external' ) {
+            $wp_admin_bar->remove_node( $id );
+        }
+    }
     $wp_admin_bar->remove_node( 'wp-logo-external' );
-    $wp_admin_bar->remove_node( 'about' );
-    $wp_admin_bar->remove_node( 'wporg' );
-    $wp_admin_bar->remove_node( 'documentation' );
-    $wp_admin_bar->remove_node( 'support-forums' );
-    $wp_admin_bar->remove_node( 'feedback' );
 
     $raw = mk_admin_theme_get( 'admin_bar_links' );
     if ( ! $raw ) {
