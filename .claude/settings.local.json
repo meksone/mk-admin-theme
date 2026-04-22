@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sed -i \"s/font-family: 'Poppins', -apple-system, BlinkMacSystemFont, \\\\\"Segoe UI\\\\\", sans-serif !important;/font-family: var\\(--mk-font-family\\), -apple-system, BlinkMacSystemFont, \\\\\"Segoe UI\\\\\", sans-serif !important;/g\" \"c:/Users/meks0/OneDrive - meksONE/Desktop/MK Admin theme/admin-style.css\")",
+      "Bash(sed -i \"s/font-family: 'Poppins', sans-serif !important;/font-family: var\\(--mk-font-family\\), sans-serif !important;/g\" \"c:/Users/meks0/OneDrive - meksONE/Desktop/MK Admin theme/admin-style.css\")",
+      "Bash(sed -i \"s/font-family: 'Poppins', sans-serif;/font-family: var\\(--mk-font-family\\), sans-serif;/g\" \"c:/Users/meks0/OneDrive - meksONE/Desktop/MK Admin theme/admin-style.css\")"
+    ]
+  }
+}

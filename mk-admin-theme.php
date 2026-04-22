@@ -3,7 +3,7 @@
  * Plugin Name: MK Admin Theme
  * Plugin URI:  https://meksone.com
  * Description: Custom WordPress admin theme with Poppins font, rounded corners, and a blue/yellow palette. Fully customizable via Settings > Impostazioni tema admin.
- * Version:     1.0.24
+ * Version:     1.0.25
  * Author:      Manuel Serrenti (meksONE)
  * Author URI:  https://meksone.com
  * License:     GPL-2.0+
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MK_ADMIN_THEME_VERSION', '1.0.24' );
+define( 'MK_ADMIN_THEME_VERSION', '1.0.25' );
 define( 'MK_ADMIN_THEME_URL',     plugin_dir_url( __FILE__ ) );
 define( 'MK_ADMIN_THEME_PATH',    plugin_dir_path( __FILE__ ) );
 
@@ -65,6 +65,8 @@ function mk_admin_theme_defaults() {
         'sidebar_resize'             => '0',
         'sidebar_resize_types'       => 'post, page',
         'sidebar_resize_logo'        => '',
+        // Typography
+        'font_family'                => 'Poppins',
         // Palette switching
         'active_palette'             => '0',
         // Palette 2
@@ -148,11 +150,20 @@ function mk_admin_theme_palette_get( $key ) {
 // ──────────────────────────────────────────────────────────────────────────────
 // Enqueue styles & fonts
 // ──────────────────────────────────────────────────────────────────────────────
+function mk_admin_theme_get_font_url( $font ) {
+    $fonts = [
+        'Poppins'    => 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap',
+        'Lexend'     => 'https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap',
+        'Montserrat' => 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap',
+    ];
+    return $fonts[ $font ] ?? $fonts['Poppins'];
+}
+
 function mk_admin_theme_enqueue() {
-    // Google Fonts – Poppins
+    $font = mk_admin_theme_get( 'font_family' ) ?: 'Poppins';
     wp_enqueue_style(
-        'mk-admin-poppins',
-        'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap',
+        'mk-admin-font',
+        mk_admin_theme_get_font_url( $font ),
         [],
         null
     );
@@ -161,7 +172,7 @@ function mk_admin_theme_enqueue() {
     wp_enqueue_style(
         'mk-admin-theme',
         MK_ADMIN_THEME_URL . 'admin-style.css',
-        [ 'mk-admin-poppins' ],
+        [ 'mk-admin-font' ],
         MK_ADMIN_THEME_VERSION
     );
 
@@ -175,6 +186,10 @@ add_action( 'admin_enqueue_scripts', 'mk_admin_theme_enqueue' );
 add_action( 'login_enqueue_scripts', 'mk_admin_theme_enqueue' );
 
 function mk_admin_theme_css_vars() {
+    $allowed_fonts = [ 'Poppins', 'Lexend', 'Montserrat' ];
+    $font = mk_admin_theme_get( 'font_family' );
+    $font = in_array( $font, $allowed_fonts, true ) ? $font : 'Poppins';
+
     $r   = mk_admin_theme_palette_get( 'border_radius' );
     $r   = is_numeric( $r ) ? (int) $r : 5;
 
@@ -185,6 +200,7 @@ function mk_admin_theme_css_vars() {
 
     $vars = '
 :root {
+    --mk-font-family:              \'' . esc_attr( $font ) . '\';
     --mk-bg-base:                  ' . mk_admin_theme_palette_get('bg_base') . ';
     --mk-bg-menu:                  ' . mk_admin_theme_palette_get('bg_menu') . ';
     --mk-bg-menu-hover:            ' . mk_admin_theme_palette_get('bg_menu_hover') . ';
@@ -357,7 +373,7 @@ add_action( 'admin_init', 'mk_admin_theme_register_settings' );
 function mk_admin_theme_sanitize( $input ) {
     $defaults     = mk_admin_theme_defaults();
     $bool_fields  = [ 'sync_elementor_gutenberg', 'sync_elementor_acf', 'gutenberg_title_only', 'gutenberg_restrict_blocks', 'sidebar_resize' ];
-    $text_fields  = [ 'gutenberg_title_only_types', 'gutenberg_restrict_blocks_types', 'gutenberg_restrict_blocks_whitelist', 'sidebar_resize_types', 'active_palette', 'palette2_name' ];
+    $text_fields  = [ 'gutenberg_title_only_types', 'gutenberg_restrict_blocks_types', 'gutenberg_restrict_blocks_whitelist', 'sidebar_resize_types', 'active_palette', 'palette2_name', 'font_family' ];
     $url_fields   = [ 'sidebar_resize_logo' ];
     $output       = [];
 
@@ -651,6 +667,28 @@ function mk_admin_theme_settings_page() {
             <script type="text/template" id="mk-palette-tpl">
                 <?php mk_admin_theme_render_palette_panel( '__IDX__', $pal_defaults, $color_sections, $pal_defaults, -1 ); ?>
             </script>
+
+            <!-- Typography -->
+            <h2><?php esc_html_e( 'Tipografia', 'mk-admin-theme' ); ?></h2>
+            <table class="form-table" role="presentation">
+                <tr>
+                    <th scope="row">
+                        <label for="mk_font_family"><?php esc_html_e( 'Font', 'mk-admin-theme' ); ?></label>
+                    </th>
+                    <td>
+                        <?php
+                        $current_font = mk_admin_theme_get( 'font_family' ) ?: 'Poppins';
+                        $font_options = [ 'Poppins', 'Lexend', 'Montserrat' ];
+                        ?>
+                        <select id="mk_font_family" name="mk_admin_theme_options[font_family]">
+                            <?php foreach ( $font_options as $f ) : ?>
+                                <option value="<?php echo esc_attr( $f ); ?>" <?php selected( $current_font, $f ); ?>><?php echo esc_html( $f ); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="description"><?php esc_html_e( 'Google Font applicato a tutta la dashboard.', 'mk-admin-theme' ); ?></p>
+                    </td>
+                </tr>
+            </table>
 
             <!-- Integrations -->
             <h2><?php esc_html_e( 'Integrazioni', 'mk-admin-theme' ); ?></h2>

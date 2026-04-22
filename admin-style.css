@@ -256,7 +256,7 @@ body.mk-dark #wpfooter {
 
 .mk-toggle-label {
     font-size: 11px;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--mk-font-family), sans-serif;
     font-weight: 500;
     color: var(--mk-text-topbar, #e8ecf0);
 }
@@ -272,7 +272,7 @@ html, body,
 .wp-submenu,
 #wpwrap, .wrap,
 input, select, textarea, button {
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+    font-family: var(--mk-font-family), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
 }
 
 /* ── Page background ── */
@@ -285,7 +285,7 @@ input, select, textarea, button {
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 #wpadminbar {
     background: var(--mk-bg-topbar) !important;
-    font-family: 'Poppins', sans-serif !important;
+    font-family: var(--mk-font-family), sans-serif !important;
 }
 
 #wpadminbar .ab-item, #wpadminbar a {
@@ -316,7 +316,7 @@ input, select, textarea, button {
 
 #adminmenu a, #adminmenu .wp-menu-name {
     color: var(--mk-text-menu) !important;
-    font-family: 'Poppins', sans-serif !important;
+    font-family: var(--mk-font-family), sans-serif !important;
     font-size: 13px;
     font-weight: 400;
 }
@@ -462,7 +462,7 @@ a.button-primary {
     color: var(--mk-btn-primary-text) !important;
     border-color: var(--mk-btn-primary-bg) !important;
     border-radius: var(--mk-radius) !important;
-    font-family: 'Poppins', sans-serif !important;
+    font-family: var(--mk-font-family), sans-serif !important;
     font-weight: 500 !important;
     box-shadow: none !important;
     text-shadow: none !important;
@@ -478,7 +478,7 @@ a.button-primary {
 input[type="submit"]:not(.button-primary),
 a.button:not(.button-primary) {
     border-radius: var(--mk-radius) !important;
-    font-family: 'Poppins', sans-serif !important;
+    font-family: var(--mk-font-family), sans-serif !important;
     font-weight: 400 !important;
     box-shadow: none !important;
     text-shadow: none !important;
@@ -498,7 +498,7 @@ input[type="number"], input[type="url"], input[type="search"],
 textarea, select {
     border-radius: var(--mk-radius) !important;
     border: 1px solid #c3c4c7;
-    font-family: 'Poppins', sans-serif !important;
+    font-family: var(--mk-font-family), sans-serif !important;
     font-size: 13px;
 }
 
@@ -576,7 +576,7 @@ textarea:focus, select:focus {
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 body.login {
     background-color: var(--mk-bg-base) !important;
-    font-family: 'Poppins', sans-serif !important;
+    font-family: var(--mk-font-family), sans-serif !important;
 }
 
 #loginform, #lostpasswordform, #registerform {
@@ -589,7 +589,7 @@ body.login #wp-submit {
     border-color: var(--mk-btn-primary-bg) !important;
     border-radius: var(--mk-radius) !important;
     color: var(--mk-btn-primary-text) !important;
-    font-family: 'Poppins', sans-serif !important;
+    font-family: var(--mk-font-family), sans-serif !important;
     font-weight: 600;
     text-shadow: none !important;
     box-shadow: none !important;
@@ -614,12 +614,12 @@ body.login .message, body.login .success, body.login .error {
     background: var(--mk-btn-primary-bg) !important;
     color: var(--mk-btn-primary-text) !important;
     border-radius: var(--mk-radius) !important;
-    font-family: 'Poppins', sans-serif !important;
+    font-family: var(--mk-font-family), sans-serif !important;
 }
 
 .components-button.is-secondary {
     border-radius: var(--mk-radius) !important;
-    font-family: 'Poppins', sans-serif !important;
+    font-family: var(--mk-font-family), sans-serif !important;
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

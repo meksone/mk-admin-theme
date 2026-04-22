@@ -1,5 +1,9 @@
 # Changelog – MK Admin Theme
 
+## [1.0.25] – 2026-04-22
+### Added
+- Font family selector in settings (Tipografia section): choose between Poppins, Lexend, Montserrat; loads selected Google Font dynamically and applies via `--mk-font-family` CSS variable across all admin UI
+
 ## [1.0.24] – 2026-04-22
 ### Fixed
 - Removed leftover standalone "Bordi" section (border radius) from main settings page — now managed inside each palette panel
