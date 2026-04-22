@@ -415,7 +415,7 @@ add_action( 'admin_bar_menu', function ( $wp_admin_bar ) {
             'id'     => 'mk-logo-link-' . $i,
             'title'  => esc_html( $label ),
             'href'   => esc_url( $url ),
-            'meta'   => [ 'target' => '_blank', 'rel' => 'noopener' ],
+            'meta'   => [ 'target' => '_self', 'rel' => 'noopener' ],
         ] );
     }
 }, 999 );
