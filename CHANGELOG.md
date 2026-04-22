@@ -1,5 +1,13 @@
 # Changelog – MK Admin Theme
 
+## [1.0.24] – 2026-04-22
+### Fixed
+- Removed leftover standalone "Bordi" section (border radius) from main settings page — now managed inside each palette panel
+
+## [1.0.23] – 2026-04-22
+### Fixed
+- Removed leftover standalone "Intestazione Postbox" section from main settings page — postbox colors are now managed inside each palette panel
+
 ## [1.0.22] – 2026-04-22
 ### Added
 - N-palette system: unlimited palettes via `mk_admin_theme_palettes` WP option (array); `mk_admin_theme_get_palettes()`, `mk_admin_theme_default_palette_values()`, `mk_admin_theme_sanitize_palettes()`

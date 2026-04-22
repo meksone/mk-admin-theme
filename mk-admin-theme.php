@@ -3,7 +3,7 @@
  * Plugin Name: MK Admin Theme
  * Plugin URI:  https://meksone.com
  * Description: Custom WordPress admin theme with Poppins font, rounded corners, and a blue/yellow palette. Fully customizable via Settings > Impostazioni tema admin.
- * Version:     1.0.22
+ * Version:     1.0.24
  * Author:      Manuel Serrenti (meksONE)
  * Author URI:  https://meksone.com
  * License:     GPL-2.0+
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MK_ADMIN_THEME_VERSION', '1.0.22' );
+define( 'MK_ADMIN_THEME_VERSION', '1.0.24' );
 define( 'MK_ADMIN_THEME_URL',     plugin_dir_url( __FILE__ ) );
 define( 'MK_ADMIN_THEME_PATH',    plugin_dir_path( __FILE__ ) );
 
@@ -819,78 +819,6 @@ function mk_admin_theme_settings_page() {
                 </tr>
             </table>
 
-            <!-- Border radius (numeric) -->
-            <h2><?php esc_html_e( 'Bordi', 'mk-admin-theme' ); ?></h2>
-            <table class="form-table" role="presentation">
-                <tr>
-                    <th scope="row">
-                        <label for="mk_border_radius"><?php esc_html_e( 'Raggio bordo (px)', 'mk-admin-theme' ); ?></label>
-                    </th>
-                    <td>
-                        <input
-                            type="number"
-                            id="mk_border_radius"
-                            name="mk_admin_theme_options[border_radius]"
-                            value="<?php echo esc_attr( mk_admin_theme_get( 'border_radius' ) ); ?>"
-                            min="0" max="50" step="1"
-                            class="small-text"
-                        />
-                        <p class="description"><?php esc_html_e( 'Valore predefinito: 5. Imposta 0 per angoli netti.', 'mk-admin-theme' ); ?></p>
-                    </td>
-                </tr>
-            </table>
-
-            <!-- Postbox header -->
-            <h2><?php esc_html_e( 'Intestazione Postbox', 'mk-admin-theme' ); ?></h2>
-            <table class="form-table" role="presentation">
-                <tr>
-                    <th scope="row">
-                        <label for="mk_postbox_header_bg"><?php esc_html_e( 'Sfondo intestazione', 'mk-admin-theme' ); ?></label>
-                    </th>
-                    <td>
-                        <input
-                            type="text"
-                            id="mk_postbox_header_bg"
-                            name="mk_admin_theme_options[postbox_header_bg]"
-                            value="<?php echo esc_attr( mk_admin_theme_get( 'postbox_header_bg' ) ); ?>"
-                            class="mk-color-picker"
-                            data-default-color=""
-                        />
-                        <p class="description"><?php esc_html_e( 'Lascia vuoto per usare il colore primario.', 'mk-admin-theme' ); ?></p>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">
-                        <label for="mk_postbox_header_text"><?php esc_html_e( 'Colore testo intestazione', 'mk-admin-theme' ); ?></label>
-                    </th>
-                    <td>
-                        <input
-                            type="text"
-                            id="mk_postbox_header_text"
-                            name="mk_admin_theme_options[postbox_header_text]"
-                            value="<?php echo esc_attr( mk_admin_theme_get( 'postbox_header_text' ) ); ?>"
-                            class="mk-color-picker"
-                            data-default-color="#ffffff"
-                        />
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">
-                        <label for="mk_postbox_header_padding"><?php esc_html_e( 'Padding verticale (px)', 'mk-admin-theme' ); ?></label>
-                    </th>
-                    <td>
-                        <input
-                            type="number"
-                            id="mk_postbox_header_padding"
-                            name="mk_admin_theme_options[postbox_header_padding]"
-                            value="<?php echo esc_attr( mk_admin_theme_get( 'postbox_header_padding' ) ); ?>"
-                            min="0" max="50" step="1"
-                            class="small-text"
-                        />
-                        <p class="description"><?php esc_html_e( 'Valore predefinito: 6.', 'mk-admin-theme' ); ?></p>
-                    </td>
-                </tr>
-            </table>
 
             <p style="margin-top:24px;">
                 <?php submit_button( __( 'Salva impostazioni', 'mk-admin-theme' ), 'primary', 'submit', false ); ?>
