@@ -3,7 +3,7 @@
  * Plugin Name: MK Admin Theme
  * Plugin URI:  https://meksone.com
  * Description: Custom WordPress admin theme with Poppins font, rounded corners, and a blue/yellow palette. Fully customizable via Settings > Impostazioni tema admin.
- * Version:     1.0.29
+ * Version:     1.0.30
  * Author:      Manuel Serrenti (meksONE)
  * Author URI:  https://meksone.com
  * License:     GPL-2.0+
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MK_ADMIN_THEME_VERSION', '1.0.29' );
+define( 'MK_ADMIN_THEME_VERSION', '1.0.30' );
 define( 'MK_ADMIN_THEME_URL',     plugin_dir_url( __FILE__ ) );
 define( 'MK_ADMIN_THEME_PATH',    plugin_dir_path( __FILE__ ) );
 
@@ -67,6 +67,8 @@ function mk_admin_theme_defaults() {
         'sidebar_resize_logo'        => '',
         // Typography
         'font_family'                => 'Poppins',
+        // Admin bar custom links ("Label|URL" one per line)
+        'admin_bar_links'            => '',
         // Palette switching
         'active_palette'             => '0',
         // Palette 2
@@ -381,6 +383,43 @@ function mk_admin_theme_acf_toolbar_css() {
 add_action( 'admin_footer', 'mk_admin_theme_acf_toolbar_css', 9999 );
 
 // ──────────────────────────────────────────────────────────────────────────────
+// Admin bar: remove default WP logo links, inject custom links
+// ──────────────────────────────────────────────────────────────────────────────
+add_action( 'admin_bar_menu', function ( $wp_admin_bar ) {
+    // Always remove WP default sub-links under the logo.
+    $wp_admin_bar->remove_node( 'wp-logo-external' );
+    $wp_admin_bar->remove_node( 'about' );
+    $wp_admin_bar->remove_node( 'wporg' );
+    $wp_admin_bar->remove_node( 'documentation' );
+    $wp_admin_bar->remove_node( 'support-forums' );
+    $wp_admin_bar->remove_node( 'feedback' );
+
+    $raw = mk_admin_theme_get( 'admin_bar_links' );
+    if ( ! $raw ) {
+        return;
+    }
+    $lines = array_filter( array_map( 'trim', explode( "\n", $raw ) ) );
+    foreach ( $lines as $i => $line ) {
+        $parts = explode( '|', $line, 2 );
+        if ( count( $parts ) < 2 ) {
+            continue;
+        }
+        $label = sanitize_text_field( trim( $parts[0] ) );
+        $url   = esc_url_raw( trim( $parts[1] ) );
+        if ( ! $label || ! $url ) {
+            continue;
+        }
+        $wp_admin_bar->add_node( [
+            'parent' => 'wp-logo',
+            'id'     => 'mk-logo-link-' . $i,
+            'title'  => esc_html( $label ),
+            'href'   => esc_url( $url ),
+            'meta'   => [ 'target' => '_blank', 'rel' => 'noopener' ],
+        ] );
+    }
+}, 999 );
+
+// ──────────────────────────────────────────────────────────────────────────────
 // Settings page
 // ──────────────────────────────────────────────────────────────────────────────
 function mk_admin_theme_add_settings_page() {
@@ -410,10 +449,11 @@ add_action( 'admin_init', 'mk_admin_theme_register_settings' );
 
 function mk_admin_theme_sanitize( $input ) {
     $defaults     = mk_admin_theme_defaults();
-    $bool_fields  = [ 'sync_elementor_gutenberg', 'sync_elementor_acf', 'gutenberg_title_only', 'gutenberg_restrict_blocks', 'sidebar_resize' ];
-    $text_fields  = [ 'gutenberg_title_only_types', 'gutenberg_restrict_blocks_types', 'gutenberg_restrict_blocks_whitelist', 'sidebar_resize_types', 'active_palette', 'palette2_name', 'font_family' ];
-    $url_fields   = [ 'sidebar_resize_logo' ];
-    $output       = [];
+    $bool_fields     = [ 'sync_elementor_gutenberg', 'sync_elementor_acf', 'gutenberg_title_only', 'gutenberg_restrict_blocks', 'sidebar_resize' ];
+    $text_fields     = [ 'gutenberg_title_only_types', 'gutenberg_restrict_blocks_types', 'gutenberg_restrict_blocks_whitelist', 'sidebar_resize_types', 'active_palette', 'palette2_name', 'font_family' ];
+    $url_fields      = [ 'sidebar_resize_logo' ];
+    $textarea_fields = [ 'admin_bar_links' ];
+    $output          = [];
 
     foreach ( $defaults as $key => $default ) {
         if ( in_array( $key, [ 'border_radius', 'postbox_header_padding', 'p2_border_radius', 'p2_postbox_header_padding' ], true ) ) {
@@ -422,6 +462,8 @@ function mk_admin_theme_sanitize( $input ) {
             $output[ $key ] = ! empty( $input[ $key ] ) ? '1' : '0';
         } elseif ( in_array( $key, $text_fields, true ) ) {
             $output[ $key ] = isset( $input[ $key ] ) ? sanitize_text_field( $input[ $key ] ) : $default;
+        } elseif ( in_array( $key, $textarea_fields, true ) ) {
+            $output[ $key ] = isset( $input[ $key ] ) ? sanitize_textarea_field( $input[ $key ] ) : $default;
         } elseif ( in_array( $key, $url_fields, true ) ) {
             $output[ $key ] = isset( $input[ $key ] ) ? esc_url_raw( $input[ $key ] ) : $default;
         } else {
@@ -724,6 +766,28 @@ function mk_admin_theme_settings_page() {
                             <?php endforeach; ?>
                         </select>
                         <p class="description"><?php esc_html_e( 'Google Font applicato a tutta la dashboard.', 'mk-admin-theme' ); ?></p>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- Admin bar links -->
+            <h2><?php esc_html_e( 'Link favicon barra superiore', 'mk-admin-theme' ); ?></h2>
+            <table class="form-table" role="presentation">
+                <tr>
+                    <th scope="row">
+                        <label for="mk_admin_bar_links"><?php esc_html_e( 'Link personalizzati', 'mk-admin-theme' ); ?></label>
+                    </th>
+                    <td>
+                        <textarea
+                            id="mk_admin_bar_links"
+                            name="mk_admin_theme_options[admin_bar_links]"
+                            rows="6"
+                            class="large-text code"
+                            placeholder="<?php esc_attr_e( 'Etichetta|https://esempio.com', 'mk-admin-theme' ); ?>"
+                        ><?php echo esc_textarea( mk_admin_theme_get( 'admin_bar_links' ) ); ?></textarea>
+                        <p class="description">
+                            <?php esc_html_e( 'Un link per riga nel formato Etichetta|URL. I link predefiniti di WordPress vengono sempre rimossi.', 'mk-admin-theme' ); ?>
+                        </p>
                     </td>
                 </tr>
             </table>

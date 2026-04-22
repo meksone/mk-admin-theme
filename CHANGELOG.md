@@ -1,5 +1,9 @@
 # Changelog – MK Admin Theme
 
+## [1.0.30] – 2026-04-22
+### Added
+- New settings section "Link favicon barra superiore": textarea for custom admin bar links (`Etichetta|URL`, one per line); default WP logo sub-links always removed via `admin_bar_menu` hook at priority 999; custom links injected under `wp-logo` node with `target="_blank"`
+
 ## [1.0.29] – 2026-04-22
 ### Fixed
 - Admin bar icons restored: excluded `.ab-icon` from font override (WP renders dashicons via `.ab-icon::before`, inheriting wrong font); explicit `font-family: dashicons` restore rule added for `.ab-icon`, `.dashicons`, `[class*="dashicons"]`
