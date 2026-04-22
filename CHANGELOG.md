@@ -1,5 +1,21 @@
 # Changelog – MK Admin Theme
 
+## [1.0.21] – 2026-04-22
+### Added
+- Per-user palette picker on profile/user-edit page: replaces WP default color scheme selector with 2 visual swatch options (one per configured palette)
+- `mk_admin_theme_save_user_palette()` saves choice as user meta via `personal_options_update` + `edit_user_profile_update`
+- `mk_admin_theme_profile_styles()` hides `.user-admin-color-wrap` (WP default picker) and injects picker CSS on profile screens only
+- `mk_admin_theme_palette_get()` now checks user meta first, falls back to global `active_palette` setting — per-user choice is transparent to all CSS var/postbox rendering
+
+## [1.0.20] – 2026-04-22
+### Added
+- Dual palette system: Palette 1 + freely-named Palette 2; radio switcher at top of settings page selects which palette is active site-wide
+- All color/radius/padding fields duplicated for Palette 2 (`p2_*` keys); `mk_admin_theme_palette_get()` helper reads from active palette transparently
+- `mk_admin_theme_css_vars()` and `mk_admin_theme_postbox_css_block()` now use palette-aware helper — switching palette requires only saving the radio, no template changes
+### Changed
+- Color picker sections redesigned as 2-column CSS grid (`mk-color-grid`) to halve vertical space; Palette 1 and Palette 2 each wrapped in a bordered card (`mk-palette-box`)
+- Border radius and postbox padding moved inside respective palette cards
+
 ## [1.0.19] – 2026-04-21
 ### Added
 - New **Restrizione blocchi Gutenberg** section in settings: on/off toggle, post type list, and block whitelist (comma-separated block names)

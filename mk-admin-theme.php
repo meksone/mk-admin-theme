@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MK_ADMIN_THEME_VERSION', '1.0.19' );
+define( 'MK_ADMIN_THEME_VERSION', '1.0.21' );
 define( 'MK_ADMIN_THEME_URL',     plugin_dir_url( __FILE__ ) );
 define( 'MK_ADMIN_THEME_PATH',    plugin_dir_path( __FILE__ ) );
 
@@ -65,6 +65,31 @@ function mk_admin_theme_defaults() {
         'sidebar_resize'             => '0',
         'sidebar_resize_types'       => 'post, page',
         'sidebar_resize_logo'        => '',
+        // Palette switching
+        'active_palette'             => '1',
+        // Palette 2
+        'palette2_name'                  => 'Palette 2',
+        'p2_bg_base'                     => '#f0f0f1',
+        'p2_bg_menu'                     => '#013162',
+        'p2_bg_menu_hover'               => '#01234a',
+        'p2_bg_menu_current'             => '#fdc513',
+        'p2_bg_menu_current_hover'       => '#e6b000',
+        'p2_text_menu'                   => '#e8ecf0',
+        'p2_text_menu_current'           => '#013162',
+        'p2_color_primary'               => '#013162',
+        'p2_color_accent'                => '#fdc513',
+        'p2_color_accent_text'           => '#013162',
+        'p2_bg_topbar'                   => '#013162',
+        'p2_text_topbar'                 => '#e8ecf0',
+        'p2_color_link'                  => '#013162',
+        'p2_color_button_primary_bg'     => '#013162',
+        'p2_color_button_primary_text'   => '#ffffff',
+        'p2_color_button_secondary_bg'   => '#fdc513',
+        'p2_color_button_secondary_text' => '#013162',
+        'p2_postbox_header_bg'           => '',
+        'p2_postbox_header_text'         => '#ffffff',
+        'p2_postbox_header_padding'      => '6',
+        'p2_border_radius'               => '5',
     ];
 }
 
@@ -72,6 +97,15 @@ function mk_admin_theme_get( $key ) {
     $defaults = mk_admin_theme_defaults();
     $saved    = get_option( 'mk_admin_theme_options', [] );
     return isset( $saved[ $key ] ) ? sanitize_text_field( $saved[ $key ] ) : ( $defaults[ $key ] ?? '' );
+}
+
+function mk_admin_theme_palette_get( $key ) {
+    $user_palette = is_user_logged_in() ? get_user_option( 'mk_admin_theme_palette' ) : '';
+    $active       = $user_palette ?: mk_admin_theme_get( 'active_palette' );
+    if ( $active === '2' ) {
+        return mk_admin_theme_get( 'p2_' . $key );
+    }
+    return mk_admin_theme_get( $key );
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -104,33 +138,33 @@ add_action( 'admin_enqueue_scripts', 'mk_admin_theme_enqueue' );
 add_action( 'login_enqueue_scripts', 'mk_admin_theme_enqueue' );
 
 function mk_admin_theme_css_vars() {
-    $r   = mk_admin_theme_get( 'border_radius' );
+    $r   = mk_admin_theme_palette_get( 'border_radius' );
     $r   = is_numeric( $r ) ? (int) $r : 5;
 
-    $pbg  = mk_admin_theme_get( 'postbox_header_bg' );
-    $ptxt = mk_admin_theme_get( 'postbox_header_text' );
-    $ppad = mk_admin_theme_get( 'postbox_header_padding' );
+    $pbg  = mk_admin_theme_palette_get( 'postbox_header_bg' );
+    $ptxt = mk_admin_theme_palette_get( 'postbox_header_text' );
+    $ppad = mk_admin_theme_palette_get( 'postbox_header_padding' );
     $ppad = is_numeric( $ppad ) ? (int) $ppad : 6;
 
     $vars = '
 :root {
-    --mk-bg-base:                  ' . mk_admin_theme_get('bg_base') . ';
-    --mk-bg-menu:                  ' . mk_admin_theme_get('bg_menu') . ';
-    --mk-bg-menu-hover:            ' . mk_admin_theme_get('bg_menu_hover') . ';
-    --mk-bg-menu-current:          ' . mk_admin_theme_get('bg_menu_current') . ';
-    --mk-bg-menu-current-hover:    ' . mk_admin_theme_get('bg_menu_current_hover') . ';
-    --mk-text-menu:                ' . mk_admin_theme_get('text_menu') . ';
-    --mk-text-menu-current:        ' . mk_admin_theme_get('text_menu_current') . ';
-    --mk-color-primary:            ' . mk_admin_theme_get('color_primary') . ';
-    --mk-color-accent:             ' . mk_admin_theme_get('color_accent') . ';
-    --mk-color-accent-text:        ' . mk_admin_theme_get('color_accent_text') . ';
-    --mk-bg-topbar:                ' . mk_admin_theme_get('bg_topbar') . ';
-    --mk-text-topbar:              ' . mk_admin_theme_get('text_topbar') . ';
-    --mk-color-link:               ' . mk_admin_theme_get('color_link') . ';
-    --mk-btn-primary-bg:           ' . mk_admin_theme_get('color_button_primary_bg') . ';
-    --mk-btn-primary-text:         ' . mk_admin_theme_get('color_button_primary_text') . ';
-    --mk-btn-secondary-bg:         ' . mk_admin_theme_get('color_button_secondary_bg') . ';
-    --mk-btn-secondary-text:       ' . mk_admin_theme_get('color_button_secondary_text') . ';
+    --mk-bg-base:                  ' . mk_admin_theme_palette_get('bg_base') . ';
+    --mk-bg-menu:                  ' . mk_admin_theme_palette_get('bg_menu') . ';
+    --mk-bg-menu-hover:            ' . mk_admin_theme_palette_get('bg_menu_hover') . ';
+    --mk-bg-menu-current:          ' . mk_admin_theme_palette_get('bg_menu_current') . ';
+    --mk-bg-menu-current-hover:    ' . mk_admin_theme_palette_get('bg_menu_current_hover') . ';
+    --mk-text-menu:                ' . mk_admin_theme_palette_get('text_menu') . ';
+    --mk-text-menu-current:        ' . mk_admin_theme_palette_get('text_menu_current') . ';
+    --mk-color-primary:            ' . mk_admin_theme_palette_get('color_primary') . ';
+    --mk-color-accent:             ' . mk_admin_theme_palette_get('color_accent') . ';
+    --mk-color-accent-text:        ' . mk_admin_theme_palette_get('color_accent_text') . ';
+    --mk-bg-topbar:                ' . mk_admin_theme_palette_get('bg_topbar') . ';
+    --mk-text-topbar:              ' . mk_admin_theme_palette_get('text_topbar') . ';
+    --mk-color-link:               ' . mk_admin_theme_palette_get('color_link') . ';
+    --mk-btn-primary-bg:           ' . mk_admin_theme_palette_get('color_button_primary_bg') . ';
+    --mk-btn-primary-text:         ' . mk_admin_theme_palette_get('color_button_primary_text') . ';
+    --mk-btn-secondary-bg:         ' . mk_admin_theme_palette_get('color_button_secondary_bg') . ';
+    --mk-btn-secondary-text:       ' . mk_admin_theme_palette_get('color_button_secondary_text') . ';
     --mk-radius:                   ' . $r . 'px;
     --mk-postbox-header-bg:        ' . ( $pbg  ?: 'var(--mk-color-primary)' ) . ';
     --mk-postbox-header-text:      ' . ( $ptxt ?: '#ffffff' ) . ';
@@ -141,8 +175,8 @@ function mk_admin_theme_css_vars() {
 
 // Postbox header override CSS block — shared output function.
 function mk_admin_theme_postbox_css_block( $include_acf_selector = false ) {
-    $pbg  = mk_admin_theme_get( 'postbox_header_bg' );
-    $ptxt = mk_admin_theme_get( 'postbox_header_text' );
+    $pbg  = mk_admin_theme_palette_get( 'postbox_header_bg' );
+    $ptxt = mk_admin_theme_palette_get( 'postbox_header_text' );
     $ppad = mk_admin_theme_get( 'postbox_header_padding' );
     $ppad = is_numeric( $ppad ) ? (int) $ppad : 6;
     $bg   = esc_attr( $pbg ?: 'var(--mk-color-primary)' );
@@ -281,12 +315,12 @@ add_action( 'admin_init', 'mk_admin_theme_register_settings' );
 function mk_admin_theme_sanitize( $input ) {
     $defaults     = mk_admin_theme_defaults();
     $bool_fields  = [ 'sync_elementor_gutenberg', 'sync_elementor_acf', 'gutenberg_title_only', 'gutenberg_restrict_blocks', 'sidebar_resize' ];
-    $text_fields  = [ 'gutenberg_title_only_types', 'gutenberg_restrict_blocks_types', 'gutenberg_restrict_blocks_whitelist', 'sidebar_resize_types' ];
+    $text_fields  = [ 'gutenberg_title_only_types', 'gutenberg_restrict_blocks_types', 'gutenberg_restrict_blocks_whitelist', 'sidebar_resize_types', 'active_palette', 'palette2_name' ];
     $url_fields   = [ 'sidebar_resize_logo' ];
     $output       = [];
 
     foreach ( $defaults as $key => $default ) {
-        if ( in_array( $key, [ 'border_radius', 'postbox_header_padding' ], true ) ) {
+        if ( in_array( $key, [ 'border_radius', 'postbox_header_padding', 'p2_border_radius', 'p2_postbox_header_padding' ], true ) ) {
             $output[ $key ] = isset( $input[ $key ] ) ? absint( $input[ $key ] ) : absint( $default );
         } elseif ( in_array( $key, $bool_fields, true ) ) {
             $output[ $key ] = ! empty( $input[ $key ] ) ? '1' : '0';
@@ -389,36 +423,171 @@ function mk_admin_theme_settings_page() {
             'color_button_secondary_text' => __( 'Bottone secondario – testo', 'mk-admin-theme' ),
         ],
     ];
+    $defaults = mk_admin_theme_defaults();
     ?>
     <div class="wrap">
         <h1><?php esc_html_e( 'Impostazioni tema admin', 'mk-admin-theme' ); ?></h1>
         <p><?php esc_html_e( 'Personalizza colori e stile della dashboard WordPress.', 'mk-admin-theme' ); ?></p>
 
+        <style>
+        .mk-color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 48px; max-width: 860px; margin: 12px 0 24px; }
+        .mk-color-cell > label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; }
+        .mk-palette-box { background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; padding: 16px 20px 4px; margin-bottom: 24px; }
+        .mk-palette-box > h2 { margin-top: 0; display: flex; align-items: center; gap: 12px; }
+        .mk-palette-box > h2 input { font-size: 14px; font-weight: normal; }
+        </style>
+
         <form method="post" action="options.php">
             <?php settings_fields( 'mk_admin_theme_group' ); ?>
 
-            <?php foreach ( $fields as $section => $section_fields ) : ?>
-                <h2><?php echo esc_html( $section ); ?></h2>
-                <table class="form-table" role="presentation">
-                    <?php foreach ( $section_fields as $key => $label ) : ?>
-                        <tr>
-                            <th scope="row">
-                                <label for="mk_<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></label>
-                            </th>
-                            <td>
-                                <input
-                                    type="text"
-                                    id="mk_<?php echo esc_attr( $key ); ?>"
-                                    name="mk_admin_theme_options[<?php echo esc_attr( $key ); ?>]"
-                                    value="<?php echo esc_attr( mk_admin_theme_get( $key ) ); ?>"
-                                    class="mk-color-picker"
-                                    data-default-color="<?php $d = mk_admin_theme_defaults(); echo esc_attr( $d[ $key ] ?? '#000000' ); ?>"
-                                />
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
+            <!-- Active palette switcher -->
+            <h2><?php esc_html_e( 'Palette attiva', 'mk-admin-theme' ); ?></h2>
+            <table class="form-table" role="presentation">
+                <tr>
+                    <th scope="row"><?php esc_html_e( 'Palette in uso', 'mk-admin-theme' ); ?></th>
+                    <td>
+                        <label style="margin-right:24px;">
+                            <input type="radio" name="mk_admin_theme_options[active_palette]" value="1"
+                                <?php checked( mk_admin_theme_get( 'active_palette' ), '1' ); ?> />
+                            <?php esc_html_e( 'Palette 1', 'mk-admin-theme' ); ?>
+                        </label>
+                        <label>
+                            <input type="radio" name="mk_admin_theme_options[active_palette]" value="2"
+                                <?php checked( mk_admin_theme_get( 'active_palette' ), '2' ); ?> />
+                            <?php echo esc_html( mk_admin_theme_get( 'palette2_name' ) ?: __( 'Palette 2', 'mk-admin-theme' ) ); ?>
+                        </label>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- Palette 1 -->
+            <div class="mk-palette-box">
+                <h2><?php esc_html_e( 'Palette 1', 'mk-admin-theme' ); ?></h2>
+
+                <?php foreach ( $fields as $section => $section_fields ) : ?>
+                    <h3><?php echo esc_html( $section ); ?></h3>
+                    <div class="mk-color-grid">
+                        <?php foreach ( $section_fields as $key => $label ) : ?>
+                        <div class="mk-color-cell">
+                            <label for="mk_<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></label>
+                            <input
+                                type="text"
+                                id="mk_<?php echo esc_attr( $key ); ?>"
+                                name="mk_admin_theme_options[<?php echo esc_attr( $key ); ?>]"
+                                value="<?php echo esc_attr( mk_admin_theme_get( $key ) ); ?>"
+                                class="mk-color-picker"
+                                data-default-color="<?php echo esc_attr( $defaults[ $key ] ?? '#000000' ); ?>"
+                            />
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endforeach; ?>
+
+                <h3><?php esc_html_e( 'Intestazione Postbox', 'mk-admin-theme' ); ?></h3>
+                <div class="mk-color-grid">
+                    <div class="mk-color-cell">
+                        <label for="mk_postbox_header_bg"><?php esc_html_e( 'Sfondo intestazione', 'mk-admin-theme' ); ?></label>
+                        <input type="text" id="mk_postbox_header_bg" name="mk_admin_theme_options[postbox_header_bg]"
+                            value="<?php echo esc_attr( mk_admin_theme_get( 'postbox_header_bg' ) ); ?>"
+                            class="mk-color-picker" data-default-color="" />
+                        <p class="description" style="margin-top:4px;"><?php esc_html_e( 'Vuoto = colore primario.', 'mk-admin-theme' ); ?></p>
+                    </div>
+                    <div class="mk-color-cell">
+                        <label for="mk_postbox_header_text"><?php esc_html_e( 'Testo intestazione', 'mk-admin-theme' ); ?></label>
+                        <input type="text" id="mk_postbox_header_text" name="mk_admin_theme_options[postbox_header_text]"
+                            value="<?php echo esc_attr( mk_admin_theme_get( 'postbox_header_text' ) ); ?>"
+                            class="mk-color-picker" data-default-color="#ffffff" />
+                    </div>
+                </div>
+
+                <table class="form-table" role="presentation" style="max-width:860px;margin-top:0;">
+                    <tr>
+                        <th scope="row"><label for="mk_postbox_header_padding"><?php esc_html_e( 'Padding verticale postbox (px)', 'mk-admin-theme' ); ?></label></th>
+                        <td>
+                            <input type="number" id="mk_postbox_header_padding" name="mk_admin_theme_options[postbox_header_padding]"
+                                value="<?php echo esc_attr( mk_admin_theme_get( 'postbox_header_padding' ) ); ?>"
+                                min="0" max="50" step="1" class="small-text" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="mk_border_radius"><?php esc_html_e( 'Raggio bordo (px)', 'mk-admin-theme' ); ?></label></th>
+                        <td>
+                            <input type="number" id="mk_border_radius" name="mk_admin_theme_options[border_radius]"
+                                value="<?php echo esc_attr( mk_admin_theme_get( 'border_radius' ) ); ?>"
+                                min="0" max="50" step="1" class="small-text" />
+                            <p class="description"><?php esc_html_e( 'Valore predefinito: 5. Imposta 0 per angoli netti.', 'mk-admin-theme' ); ?></p>
+                        </td>
+                    </tr>
                 </table>
-            <?php endforeach; ?>
+            </div>
+
+            <!-- Palette 2 -->
+            <div class="mk-palette-box">
+                <h2>
+                    <span><?php esc_html_e( 'Palette 2 —', 'mk-admin-theme' ); ?></span>
+                    <input type="text" name="mk_admin_theme_options[palette2_name]"
+                        value="<?php echo esc_attr( mk_admin_theme_get( 'palette2_name' ) ); ?>"
+                        placeholder="<?php esc_attr_e( 'Nome palette', 'mk-admin-theme' ); ?>"
+                        class="regular-text" />
+                </h2>
+
+                <?php foreach ( $fields as $section => $section_fields ) : ?>
+                    <h3><?php echo esc_html( $section ); ?></h3>
+                    <div class="mk-color-grid">
+                        <?php foreach ( $section_fields as $key => $label ) : ?>
+                        <?php $p2k = 'p2_' . $key; ?>
+                        <div class="mk-color-cell">
+                            <label for="mk_<?php echo esc_attr( $p2k ); ?>"><?php echo esc_html( $label ); ?></label>
+                            <input
+                                type="text"
+                                id="mk_<?php echo esc_attr( $p2k ); ?>"
+                                name="mk_admin_theme_options[<?php echo esc_attr( $p2k ); ?>]"
+                                value="<?php echo esc_attr( mk_admin_theme_get( $p2k ) ); ?>"
+                                class="mk-color-picker"
+                                data-default-color="<?php echo esc_attr( $defaults[ $p2k ] ?? '#000000' ); ?>"
+                            />
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endforeach; ?>
+
+                <h3><?php esc_html_e( 'Intestazione Postbox', 'mk-admin-theme' ); ?></h3>
+                <div class="mk-color-grid">
+                    <div class="mk-color-cell">
+                        <label for="mk_p2_postbox_header_bg"><?php esc_html_e( 'Sfondo intestazione', 'mk-admin-theme' ); ?></label>
+                        <input type="text" id="mk_p2_postbox_header_bg" name="mk_admin_theme_options[p2_postbox_header_bg]"
+                            value="<?php echo esc_attr( mk_admin_theme_get( 'p2_postbox_header_bg' ) ); ?>"
+                            class="mk-color-picker" data-default-color="" />
+                        <p class="description" style="margin-top:4px;"><?php esc_html_e( 'Vuoto = colore primario.', 'mk-admin-theme' ); ?></p>
+                    </div>
+                    <div class="mk-color-cell">
+                        <label for="mk_p2_postbox_header_text"><?php esc_html_e( 'Testo intestazione', 'mk-admin-theme' ); ?></label>
+                        <input type="text" id="mk_p2_postbox_header_text" name="mk_admin_theme_options[p2_postbox_header_text]"
+                            value="<?php echo esc_attr( mk_admin_theme_get( 'p2_postbox_header_text' ) ); ?>"
+                            class="mk-color-picker" data-default-color="#ffffff" />
+                    </div>
+                </div>
+
+                <table class="form-table" role="presentation" style="max-width:860px;margin-top:0;">
+                    <tr>
+                        <th scope="row"><label for="mk_p2_postbox_header_padding"><?php esc_html_e( 'Padding verticale postbox (px)', 'mk-admin-theme' ); ?></label></th>
+                        <td>
+                            <input type="number" id="mk_p2_postbox_header_padding" name="mk_admin_theme_options[p2_postbox_header_padding]"
+                                value="<?php echo esc_attr( mk_admin_theme_get( 'p2_postbox_header_padding' ) ); ?>"
+                                min="0" max="50" step="1" class="small-text" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="mk_p2_border_radius"><?php esc_html_e( 'Raggio bordo (px)', 'mk-admin-theme' ); ?></label></th>
+                        <td>
+                            <input type="number" id="mk_p2_border_radius" name="mk_admin_theme_options[p2_border_radius]"
+                                value="<?php echo esc_attr( mk_admin_theme_get( 'p2_border_radius' ) ); ?>"
+                                min="0" max="50" step="1" class="small-text" />
+                            <p class="description"><?php esc_html_e( 'Valore predefinito: 5. Imposta 0 per angoli netti.', 'mk-admin-theme' ); ?></p>
+                        </td>
+                    </tr>
+                </table>
+            </div>
 
             <!-- Integrations -->
             <h2><?php esc_html_e( 'Integrazioni', 'mk-admin-theme' ); ?></h2>
@@ -1448,6 +1617,101 @@ function mk_admin_theme_restrict_blocks_patterns() {
     add_filter( 'should_load_remote_block_patterns', '__return_false' );
 }
 add_action( 'current_screen', 'mk_admin_theme_restrict_blocks_patterns' );
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Per-user palette picker (replaces WP default color scheme selector)
+// ──────────────────────────────────────────────────────────────────────────────
+
+function mk_admin_theme_user_palette_picker( $user ) {
+    $current = get_user_option( 'mk_admin_theme_palette', $user->ID );
+    if ( ! $current ) {
+        $current = mk_admin_theme_get( 'active_palette' );
+    }
+
+    $palettes = [
+        '1' => [
+            'name'   => __( 'Palette 1', 'mk-admin-theme' ),
+            'colors' => [
+                mk_admin_theme_get( 'bg_menu' ),
+                mk_admin_theme_get( 'bg_topbar' ),
+                mk_admin_theme_get( 'color_primary' ),
+                mk_admin_theme_get( 'color_accent' ),
+            ],
+        ],
+        '2' => [
+            'name'   => mk_admin_theme_get( 'palette2_name' ) ?: __( 'Palette 2', 'mk-admin-theme' ),
+            'colors' => [
+                mk_admin_theme_get( 'p2_bg_menu' ),
+                mk_admin_theme_get( 'p2_bg_topbar' ),
+                mk_admin_theme_get( 'p2_color_primary' ),
+                mk_admin_theme_get( 'p2_color_accent' ),
+            ],
+        ],
+    ];
+    ?>
+    <tr class="mk-user-palette-wrap">
+        <th scope="row"><?php esc_html_e( 'Tema admin', 'mk-admin-theme' ); ?></th>
+        <td>
+            <fieldset>
+                <legend class="screen-reader-text"><span><?php esc_html_e( 'Tema admin', 'mk-admin-theme' ); ?></span></legend>
+                <?php foreach ( $palettes as $id => $palette ) : ?>
+                <div class="mk-palette-choice">
+                    <input
+                        type="radio"
+                        name="mk_admin_theme_palette"
+                        id="mk-palette-<?php echo esc_attr( $id ); ?>"
+                        value="<?php echo esc_attr( $id ); ?>"
+                        <?php checked( $current, $id ); ?>
+                    />
+                    <label for="mk-palette-<?php echo esc_attr( $id ); ?>">
+                        <span class="mk-palette-swatches" aria-hidden="true">
+                            <?php foreach ( $palette['colors'] as $color ) : ?>
+                                <span style="background:<?php echo esc_attr( $color ?: '#013162' ); ?>;"></span>
+                            <?php endforeach; ?>
+                        </span>
+                        <?php echo esc_html( $palette['name'] ); ?>
+                    </label>
+                </div>
+                <?php endforeach; ?>
+            </fieldset>
+        </td>
+    </tr>
+    <?php
+}
+add_action( 'profile_personal_options', 'mk_admin_theme_user_palette_picker' );
+
+function mk_admin_theme_save_user_palette( $user_id ) {
+    if ( ! current_user_can( 'edit_user', $user_id ) ) {
+        return;
+    }
+    if ( isset( $_POST['mk_admin_theme_palette'] ) ) {
+        $value = in_array( $_POST['mk_admin_theme_palette'], [ '1', '2' ], true )
+            ? $_POST['mk_admin_theme_palette'] : '1';
+        update_user_option( $user_id, 'mk_admin_theme_palette', $value );
+    }
+}
+add_action( 'personal_options_update',  'mk_admin_theme_save_user_palette' );
+add_action( 'edit_user_profile_update', 'mk_admin_theme_save_user_palette' );
+
+function mk_admin_theme_profile_styles() {
+    $screen = get_current_screen();
+    if ( ! $screen || ! in_array( $screen->base, [ 'profile', 'user-edit' ], true ) ) {
+        return;
+    }
+    ?>
+    <style id="mk-profile-styles">
+    .user-admin-color-wrap { display: none !important; }
+    .mk-palette-choice { display: inline-block; margin: 0 20px 8px 0; vertical-align: top; }
+    .mk-palette-choice input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+    .mk-palette-choice label { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .mk-palette-swatches { display: grid; grid-template-columns: 1fr 1fr; width: 64px; height: 64px; border-radius: 4px; overflow: hidden; border: 3px solid transparent; transition: border-color .15s; }
+    .mk-palette-swatches span { display: block; }
+    .mk-palette-choice input:checked + label .mk-palette-swatches { border-color: #0073aa; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #0073aa; }
+    .mk-palette-choice label:hover .mk-palette-swatches { border-color: #999; }
+    </style>
+    <?php
+}
+add_action( 'admin_head', 'mk_admin_theme_profile_styles' );
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Dark / Light mode toggle
