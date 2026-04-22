@@ -3,7 +3,7 @@
  * Plugin Name: MK Admin Theme
  * Plugin URI:  https://meksone.com
  * Description: Custom WordPress admin theme with Poppins font, rounded corners, and a blue/yellow palette. Fully customizable via Settings > Impostazioni tema admin.
- * Version:     1.0.27
+ * Version:     1.0.28
  * Author:      Manuel Serrenti (meksONE)
  * Author URI:  https://meksone.com
  * License:     GPL-2.0+
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MK_ADMIN_THEME_VERSION', '1.0.27' );
+define( 'MK_ADMIN_THEME_VERSION', '1.0.28' );
 define( 'MK_ADMIN_THEME_URL',     plugin_dir_url( __FILE__ ) );
 define( 'MK_ADMIN_THEME_PATH',    plugin_dir_path( __FILE__ ) );
 
@@ -192,7 +192,7 @@ add_action( 'wp_enqueue_scripts', function () {
     }
     $font = mk_admin_theme_get( 'font_family' ) ?: 'Poppins';
     wp_enqueue_style( 'mk-admin-font-frontend', mk_admin_theme_get_font_url( $font ), [], null );
-    wp_add_inline_style( 'mk-admin-font-frontend', '#wpadminbar, #wpadminbar * { font-family: \'' . esc_attr( $font ) . '\', sans-serif !important; }' );
+    wp_add_inline_style( 'mk-admin-font-frontend', '#wpadminbar, #wpadminbar *:not(.dashicons):not([class*="dashicons"]) { font-family: \'' . esc_attr( $font ) . '\', sans-serif !important; }' );
 } );
 
 function mk_admin_theme_css_vars() {
@@ -284,6 +284,34 @@ function mk_admin_theme_postbox_css_block( $include_acf_selector = false ) {
 
 // Non-ACF admin pages — fires after enqueued styles are printed.
 add_action( 'admin_head', function () { mk_admin_theme_postbox_css_block( false ); }, 9999 );
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Replace WP logo in admin bar with site favicon
+// ──────────────────────────────────────────────────────────────────────────────
+function mk_admin_theme_favicon_logo() {
+    $favicon = get_site_icon_url( 32 );
+    if ( ! $favicon ) {
+        return;
+    }
+    ?>
+    <style id="mk-adminbar-favicon">
+    #wp-admin-bar-wp-logo > .ab-item .ab-icon::before {
+        background-image: url('<?php echo esc_url( $favicon ); ?>') !important;
+        background-size: contain !important;
+        background-repeat: no-repeat !important;
+        background-position: center !important;
+        content: '' !important;
+        font-family: inherit !important;
+        display: inline-block !important;
+        width: 20px !important;
+        height: 20px !important;
+        vertical-align: middle !important;
+    }
+    </style>
+    <?php
+}
+add_action( 'admin_head', 'mk_admin_theme_favicon_logo' );
+add_action( 'wp_head',    'mk_admin_theme_favicon_logo' );
 
 // ACF input pages (post edit, options pages with ACF fields) —
 // acf/input/admin_head fires after ACF outputs its own inline CSS.
