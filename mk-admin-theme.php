@@ -3,7 +3,7 @@
  * Plugin Name: MK Admin Theme
  * Plugin URI:  https://meksone.com
  * Description: Custom WordPress admin theme with Poppins font, rounded corners, and a blue/yellow palette. Fully customizable via Settings > Impostazioni tema admin.
- * Version:     1.0.31
+ * Version:     1.0.32
  * Author:      Manuel Serrenti (meksONE)
  * Author URI:  https://meksone.com
  * License:     GPL-2.0+
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MK_ADMIN_THEME_VERSION', '1.0.31' );
+define( 'MK_ADMIN_THEME_VERSION', '1.0.32' );
 define( 'MK_ADMIN_THEME_URL',     plugin_dir_url( __FILE__ ) );
 define( 'MK_ADMIN_THEME_PATH',    plugin_dir_path( __FILE__ ) );
 
@@ -394,7 +394,8 @@ add_action( 'admin_bar_menu', function ( $wp_admin_bar ) {
     }
     $wp_admin_bar->remove_node( 'wp-logo-external' );
 
-    $raw = mk_admin_theme_get( 'admin_bar_links' );
+    $opts = get_option( 'mk_admin_theme_options', [] );
+    $raw  = $opts['admin_bar_links'] ?? '';
     if ( ! $raw ) {
         return;
     }
@@ -784,7 +785,7 @@ function mk_admin_theme_settings_page() {
                             rows="6"
                             class="large-text code"
                             placeholder="<?php esc_attr_e( 'Etichetta|https://esempio.com', 'mk-admin-theme' ); ?>"
-                        ><?php echo esc_textarea( mk_admin_theme_get( 'admin_bar_links' ) ); ?></textarea>
+                        ><?php $opts = get_option( 'mk_admin_theme_options', [] ); echo esc_textarea( $opts['admin_bar_links'] ?? '' ); ?></textarea>
                         <p class="description">
                             <?php esc_html_e( 'Un link per riga nel formato Etichetta|URL. I link predefiniti di WordPress vengono sempre rimossi.', 'mk-admin-theme' ); ?>
                         </p>

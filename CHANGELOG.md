@@ -1,5 +1,9 @@
 # Changelog – MK Admin Theme
 
+## [1.0.32] – 2026-04-23
+### Fixed
+- Admin bar custom links now parse correctly: `mk_admin_theme_get()` applies `sanitize_text_field` on read which strips newlines, collapsing all lines into one; now reads `admin_bar_links` directly from raw option in both the menu hook and the settings textarea display
+
 ## [1.0.31] – 2026-04-23
 ### Fixed
 - Admin bar WP logo links now fully removed: iterate `get_nodes()` to strip all children of `wp-logo`/`wp-logo-external` dynamically — catches `contribute` and any other node added by current/future WP versions
