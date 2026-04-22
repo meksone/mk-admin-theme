@@ -1,5 +1,20 @@
 # Changelog – MK Admin Theme
 
+## [1.0.22] – 2026-04-22
+### Added
+- N-palette system: unlimited palettes via `mk_admin_theme_palettes` WP option (array); `mk_admin_theme_get_palettes()`, `mk_admin_theme_default_palette_values()`, `mk_admin_theme_sanitize_palettes()`
+- Tab UI in settings: palette names as tabs at top, clicking switches to that palette's panel without scrolling; active palette radio + delete button inside each panel
+- Rename for all palettes (including palette 1) via name input in each panel header; tab label updates live as you type
+- "Aggiungi palette" button clones template panel, inits color pickers, adds tab
+- Delete button removes palette and re-indexes remaining field names
+- Postbox color settings moved into each palette panel (no longer a separate section)
+- One-time migration (`mk_admin_theme_maybe_migrate_palettes`) copies existing p1/p2 data to new palette option on first admin load
+### Changed
+- `mk_admin_theme_palette_get()` reads from new palette array (user meta index still overrides global active_palette)
+- `active_palette` is now 0-based index; migration shifts existing '1'/'2' values to '0'/'1'
+- `settings.js`: live preview reads from visible panel via `input[name$="[key]"]`; added tab/add/delete/reindex JS; extracted `initPalettePickers()` helper called on both existing and dynamically added panels
+- User profile palette picker now renders all configured palettes dynamically
+
 ## [1.0.21] – 2026-04-22
 ### Added
 - Per-user palette picker on profile/user-edit page: replaces WP default color scheme selector with 2 visual swatch options (one per configured palette)

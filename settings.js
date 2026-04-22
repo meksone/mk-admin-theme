@@ -19,40 +19,48 @@
         sharedPickerOptions.palettes = mkAdminTheme.elementorPalette;
     }
 
-    // ── Theme settings page ───────────────────────────────────────────────────
-
-    $(document).ready(function () {
-        var themeOptions = $.extend({}, sharedPickerOptions, {
-            change: function (event, ui) { mkAdminThemeLivePreview(); },
-            clear:  function ()          { mkAdminThemeLivePreview(); }
-        });
-        $('.mk-color-picker').wpColorPicker(themeOptions);
+    var themeOptions = $.extend({}, sharedPickerOptions, {
+        change: function () { mkAdminThemeLivePreview(); },
+        clear:  function () { mkAdminThemeLivePreview(); }
     });
 
+    function initPalettePickers($scope) {
+        $scope.find('.mk-color-picker').each(function () {
+            if (!$(this).hasClass('wp-color-picker')) {
+                $(this).wpColorPicker(themeOptions);
+            }
+        });
+    }
+
+    // ── Live preview (reads from currently visible palette panel) ─────────────
+
     function mkAdminThemeLivePreview() {
+        var $panel = $('.mk-palette-panel:visible');
+        if (!$panel.length) { return; }
+
         var vars = ':root {';
         var map = {
-            'mk_bg_base':                    '--mk-bg-base',
-            'mk_color_primary':              '--mk-color-primary',
-            'mk_color_accent':               '--mk-color-accent',
-            'mk_color_accent_text':          '--mk-color-accent-text',
-            'mk_bg_topbar':                  '--mk-bg-topbar',
-            'mk_text_topbar':                '--mk-text-topbar',
-            'mk_bg_menu':                    '--mk-bg-menu',
-            'mk_bg_menu_hover':              '--mk-bg-menu-hover',
-            'mk_bg_menu_current':            '--mk-bg-menu-current',
-            'mk_bg_menu_current_hover':      '--mk-bg-menu-current-hover',
-            'mk_text_menu':                  '--mk-text-menu',
-            'mk_text_menu_current':          '--mk-text-menu-current',
-            'mk_color_link':                 '--mk-color-link',
-            'mk_color_button_primary_bg':    '--mk-btn-primary-bg',
-            'mk_color_button_primary_text':  '--mk-btn-primary-text',
-            'mk_color_button_secondary_bg':  '--mk-btn-secondary-bg',
-            'mk_color_button_secondary_text':'--mk-btn-secondary-text',
+            'bg_base':                    '--mk-bg-base',
+            'color_primary':              '--mk-color-primary',
+            'color_accent':               '--mk-color-accent',
+            'color_accent_text':          '--mk-color-accent-text',
+            'bg_topbar':                  '--mk-bg-topbar',
+            'text_topbar':                '--mk-text-topbar',
+            'bg_menu':                    '--mk-bg-menu',
+            'bg_menu_hover':              '--mk-bg-menu-hover',
+            'bg_menu_current':            '--mk-bg-menu-current',
+            'bg_menu_current_hover':      '--mk-bg-menu-current-hover',
+            'text_menu':                  '--mk-text-menu',
+            'text_menu_current':          '--mk-text-menu-current',
+            'color_link':                 '--mk-color-link',
+            'color_button_primary_bg':    '--mk-btn-primary-bg',
+            'color_button_primary_text':  '--mk-btn-primary-text',
+            'color_button_secondary_bg':  '--mk-btn-secondary-bg',
+            'color_button_secondary_text':'--mk-btn-secondary-text',
         };
 
-        $.each(map, function (inputId, cssVar) {
-            var val = $('#' + inputId).val();
+        $.each(map, function (key, cssVar) {
+            var val = $panel.find('input[name$="[' + key + ']"]').val();
             if (val) { vars += cssVar + ':' + val + ';'; }
         });
 
@@ -66,6 +74,118 @@
         }
         styleTag.textContent = vars;
     }
+
+    // ── Theme settings page ───────────────────────────────────────────────────
+
+    $(document).ready(function () {
+
+        // Init pickers on all existing palette panels
+        initPalettePickers($('#mk-palettes-wrapper, .mk-palette-panel'));
+
+        // ── Palette tabs ──────────────────────────────────────────────────────
+
+        $(document).on('click', '.mk-tab', function () {
+            var idx = $(this).data('idx');
+            $('.mk-tab').removeClass('mk-tab-active');
+            $(this).addClass('mk-tab-active');
+            $('.mk-palette-panel').hide();
+            $('.mk-palette-panel[data-idx="' + idx + '"]').show();
+            mkAdminThemeLivePreview();
+        });
+
+        // Update tab label when name input changes
+        $(document).on('input', '.mk-palette-name-input', function () {
+            var $panel = $(this).closest('.mk-palette-panel');
+            var idx    = $panel.data('idx');
+            var name   = $(this).val().trim() || 'Palette ' + (parseInt(idx, 10) + 1);
+            $('.mk-tab[data-idx="' + idx + '"]').text(name);
+        });
+
+        // ── Add palette ───────────────────────────────────────────────────────
+
+        $('#mk-palette-add').on('click', function () {
+            var idx = $('.mk-palette-panel').length;
+            var tpl = $('#mk-palette-tpl').html();
+            tpl = tpl.replace(/__IDX__/g, idx);
+            var $panel = $(tpl);
+
+            // Append panel before the template script tag
+            $('#mk-palette-tpl').before($panel);
+
+            // Add tab button
+            var label = 'Palette ' + (idx + 1);
+            var $tab  = $('<button type="button" class="mk-tab" data-idx="' + idx + '">' + label + '</button>');
+            $(this).before($tab);
+
+            // Init color pickers on new panel
+            initPalettePickers($panel);
+
+            // Switch to new tab
+            $tab.trigger('click');
+        });
+
+        // ── Delete palette ────────────────────────────────────────────────────
+
+        $(document).on('click', '.mk-palette-delete', function () {
+            if ($('.mk-palette-panel').length <= 1) {
+                alert('Almeno una palette è richiesta.');
+                return;
+            }
+            if (!confirm('Eliminare questa palette?')) { return; }
+
+            var $panel = $(this).closest('.mk-palette-panel');
+            var idx    = $panel.data('idx');
+
+            $panel.remove();
+            $('.mk-tab[data-idx="' + idx + '"]').remove();
+
+            reindexPalettes();
+
+            // If no active radio is checked, check index 0
+            if (!$('input[name="mk_admin_theme_options[active_palette]"]:checked').length) {
+                $('input[name="mk_admin_theme_options[active_palette]"][value="0"]').prop('checked', true);
+            }
+
+            // Switch to first tab
+            $('.mk-tab').first().trigger('click');
+        });
+
+        function reindexPalettes() {
+            $('.mk-palette-panel').each(function (newIdx) {
+                var $panel = $(this);
+                $panel.attr('data-idx', newIdx);
+
+                // Rename all field names: mk_admin_theme_palettes[old][key] → [newIdx][key]
+                $panel.find('[name*="mk_admin_theme_palettes["]').each(function () {
+                    this.name = this.name.replace(
+                        /mk_admin_theme_palettes\[\d+\]/,
+                        'mk_admin_theme_palettes[' + newIdx + ']'
+                    );
+                });
+
+                // Update IDs
+                $panel.find('[id*="_pal_"]').each(function () {
+                    this.id = this.id.replace(/_pal_\d+_/, '_pal_' + newIdx + '_');
+                });
+
+                // Update label for attributes
+                $panel.find('label[for*="_pal_"]').each(function () {
+                    this.htmlFor = this.htmlFor.replace(/_pal_\d+_/, '_pal_' + newIdx + '_');
+                });
+
+                // Update active_palette radio value
+                $panel.find('input[name="mk_admin_theme_options[active_palette]"]').val(newIdx);
+            });
+
+            // Update tab data-idx
+            $('.mk-tab').each(function (newIdx) {
+                $(this).attr('data-idx', newIdx);
+            });
+        }
+
+        // Initial live preview
+        mkAdminThemeLivePreview();
+    });
 
     // ── ACF Custom Styles page ────────────────────────────────────────────────
 

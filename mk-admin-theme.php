@@ -3,7 +3,7 @@
  * Plugin Name: MK Admin Theme
  * Plugin URI:  https://meksone.com
  * Description: Custom WordPress admin theme with Poppins font, rounded corners, and a blue/yellow palette. Fully customizable via Settings > Impostazioni tema admin.
- * Version:     1.0.21
+ * Version:     1.0.22
  * Author:      Manuel Serrenti (meksONE)
  * Author URI:  https://meksone.com
  * License:     GPL-2.0+
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MK_ADMIN_THEME_VERSION', '1.0.21' );
+define( 'MK_ADMIN_THEME_VERSION', '1.0.22' );
 define( 'MK_ADMIN_THEME_URL',     plugin_dir_url( __FILE__ ) );
 define( 'MK_ADMIN_THEME_PATH',    plugin_dir_path( __FILE__ ) );
 
@@ -66,7 +66,7 @@ function mk_admin_theme_defaults() {
         'sidebar_resize_types'       => 'post, page',
         'sidebar_resize_logo'        => '',
         // Palette switching
-        'active_palette'             => '1',
+        'active_palette'             => '0',
         // Palette 2
         'palette2_name'                  => 'Palette 2',
         'p2_bg_base'                     => '#f0f0f1',
@@ -99,13 +99,50 @@ function mk_admin_theme_get( $key ) {
     return isset( $saved[ $key ] ) ? sanitize_text_field( $saved[ $key ] ) : ( $defaults[ $key ] ?? '' );
 }
 
-function mk_admin_theme_palette_get( $key ) {
-    $user_palette = is_user_logged_in() ? get_user_option( 'mk_admin_theme_palette' ) : '';
-    $active       = $user_palette ?: mk_admin_theme_get( 'active_palette' );
-    if ( $active === '2' ) {
-        return mk_admin_theme_get( 'p2_' . $key );
+function mk_admin_theme_default_palette_values() {
+    return [
+        'name'                       => 'Palette',
+        'bg_base'                    => '#f0f0f1',
+        'bg_menu'                    => '#013162',
+        'bg_menu_hover'              => '#01234a',
+        'bg_menu_current'            => '#fdc513',
+        'bg_menu_current_hover'      => '#e6b000',
+        'text_menu'                  => '#e8ecf0',
+        'text_menu_current'          => '#013162',
+        'color_primary'              => '#013162',
+        'color_accent'               => '#fdc513',
+        'color_accent_text'          => '#013162',
+        'bg_topbar'                  => '#013162',
+        'text_topbar'                => '#e8ecf0',
+        'color_link'                 => '#013162',
+        'color_button_primary_bg'    => '#013162',
+        'color_button_primary_text'  => '#ffffff',
+        'color_button_secondary_bg'  => '#fdc513',
+        'color_button_secondary_text'=> '#013162',
+        'postbox_header_bg'          => '',
+        'postbox_header_text'        => '#ffffff',
+        'postbox_header_padding'     => '6',
+        'border_radius'              => '5',
+    ];
+}
+
+function mk_admin_theme_get_palettes() {
+    $palettes = get_option( 'mk_admin_theme_palettes', [] );
+    if ( empty( $palettes ) || ! is_array( $palettes ) ) {
+        $palettes = [ mk_admin_theme_default_palette_values() ];
     }
-    return mk_admin_theme_get( $key );
+    return $palettes;
+}
+
+function mk_admin_theme_palette_get( $key ) {
+    $user_idx = is_user_logged_in() ? get_user_option( 'mk_admin_theme_palette' ) : null;
+    $active   = ( $user_idx !== null && $user_idx !== false )
+        ? (int) $user_idx
+        : (int) mk_admin_theme_get( 'active_palette' );
+    $palettes = mk_admin_theme_get_palettes();
+    $palette  = $palettes[ $active ] ?? $palettes[0];
+    $defaults = mk_admin_theme_default_palette_values();
+    return $palette[ $key ] ?? $defaults[ $key ] ?? '';
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -309,6 +346,11 @@ function mk_admin_theme_register_settings() {
         'mk_admin_theme_options',
         [ 'sanitize_callback' => 'mk_admin_theme_sanitize' ]
     );
+    register_setting(
+        'mk_admin_theme_group',
+        'mk_admin_theme_palettes',
+        [ 'sanitize_callback' => 'mk_admin_theme_sanitize_palettes' ]
+    );
 }
 add_action( 'admin_init', 'mk_admin_theme_register_settings' );
 
@@ -334,6 +376,65 @@ function mk_admin_theme_sanitize( $input ) {
     }
     return $output;
 }
+
+function mk_admin_theme_sanitize_palettes( $input ) {
+    if ( ! is_array( $input ) ) {
+        return mk_admin_theme_get_palettes();
+    }
+    $defaults  = mk_admin_theme_default_palette_values();
+    $hex_keys  = [ 'bg_base', 'bg_menu', 'bg_menu_hover', 'bg_menu_current', 'bg_menu_current_hover',
+                   'text_menu', 'text_menu_current', 'color_primary', 'color_accent', 'color_accent_text',
+                   'bg_topbar', 'text_topbar', 'color_link', 'color_button_primary_bg', 'color_button_primary_text',
+                   'color_button_secondary_bg', 'color_button_secondary_text', 'postbox_header_text' ];
+    $int_keys  = [ 'postbox_header_padding', 'border_radius' ];
+    $output    = [];
+    foreach ( array_values( $input ) as $palette ) {
+        if ( ! is_array( $palette ) ) {
+            continue;
+        }
+        $s         = [];
+        $s['name'] = sanitize_text_field( $palette['name'] ?? '' );
+        foreach ( $hex_keys as $k ) {
+            $val  = $palette[ $k ] ?? $defaults[ $k ];
+            $s[$k] = sanitize_hex_color( $val ) ?? $defaults[ $k ];
+        }
+        $s['postbox_header_bg'] = isset( $palette['postbox_header_bg'] ) && $palette['postbox_header_bg'] !== ''
+            ? ( sanitize_hex_color( $palette['postbox_header_bg'] ) ?? '' ) : '';
+        foreach ( $int_keys as $k ) {
+            $s[$k] = (string) absint( $palette[ $k ] ?? $defaults[ $k ] );
+        }
+        $output[] = $s;
+    }
+    return empty( $output ) ? [ mk_admin_theme_default_palette_values() ] : $output;
+}
+
+function mk_admin_theme_maybe_migrate_palettes() {
+    if ( get_option( 'mk_admin_theme_palettes' ) !== false ) {
+        return;
+    }
+    $main     = get_option( 'mk_admin_theme_options', [] );
+    $defaults = mk_admin_theme_default_palette_values();
+    $p1       = $defaults;
+    $p1['name'] = 'Palette 1';
+    foreach ( array_keys( $defaults ) as $k ) {
+        if ( $k === 'name' ) { continue; }
+        if ( isset( $main[ $k ] ) && $main[ $k ] !== '' ) { $p1[ $k ] = $main[ $k ]; }
+    }
+    $p2         = $defaults;
+    $p2['name'] = $main['palette2_name'] ?? 'Palette 2';
+    foreach ( array_keys( $defaults ) as $k ) {
+        if ( $k === 'name' ) { continue; }
+        $p2k = 'p2_' . $k;
+        if ( isset( $main[ $p2k ] ) && $main[ $p2k ] !== '' ) { $p2[ $k ] = $main[ $p2k ]; }
+    }
+    update_option( 'mk_admin_theme_palettes', [ $p1, $p2 ] );
+    // Migrate active_palette from 1-based ('1','2') to 0-based ('0','1')
+    if ( isset( $main['active_palette'] ) && (int) $main['active_palette'] >= 1 ) {
+        $main['active_palette'] = (string) ( (int) $main['active_palette'] - 1 );
+        update_option( 'mk_admin_theme_options', $main );
+    }
+}
+add_action( 'admin_init', 'mk_admin_theme_maybe_migrate_palettes', 1 );
 
 // Colour picker asset
 function mk_admin_theme_admin_scripts( $hook ) {
@@ -391,20 +492,97 @@ add_action( 'admin_enqueue_scripts', 'mk_admin_theme_admin_scripts' );
 // ──────────────────────────────────────────────────────────────────────────────
 // Settings page HTML
 // ──────────────────────────────────────────────────────────────────────────────
+function mk_admin_theme_render_palette_panel( $idx, $palette, $color_sections, $pal_defaults, $active_idx ) {
+    $is_tpl = $idx === '__IDX__';
+    $hidden = ( ! $is_tpl && (int) $idx !== 0 ) ? ' style="display:none"' : '';
+    ?>
+    <div class="mk-palette-panel" data-idx="<?php echo esc_attr( $idx ); ?>"<?php echo $hidden; ?>>
+        <div class="mk-palette-header">
+            <div class="mk-palette-name-row">
+                <label for="mk_pal_<?php echo esc_attr( $idx ); ?>_name"><?php esc_html_e( 'Nome', 'mk-admin-theme' ); ?></label>
+                <input type="text"
+                    id="mk_pal_<?php echo esc_attr( $idx ); ?>_name"
+                    name="mk_admin_theme_palettes[<?php echo esc_attr( $idx ); ?>][name]"
+                    value="<?php echo $is_tpl ? '' : esc_attr( $palette['name'] ?? '' ); ?>"
+                    class="regular-text mk-palette-name-input"
+                    placeholder="<?php esc_attr_e( 'Nome palette', 'mk-admin-theme' ); ?>"
+                />
+            </div>
+            <div class="mk-palette-actions">
+                <label>
+                    <input type="radio"
+                        name="mk_admin_theme_options[active_palette]"
+                        value="<?php echo esc_attr( $idx ); ?>"
+                        <?php if ( ! $is_tpl ) { checked( $active_idx, (int) $idx ); } ?>
+                    />
+                    <?php esc_html_e( 'Attiva', 'mk-admin-theme' ); ?>
+                </label>
+                <button type="button" class="button-link-delete mk-palette-delete" style="color:#b32d2e;">
+                    <?php esc_html_e( 'Elimina', 'mk-admin-theme' ); ?>
+                </button>
+            </div>
+        </div>
+
+        <?php foreach ( $color_sections as $section_label => $section_keys ) : ?>
+            <h3 style="margin-bottom:6px;"><?php echo esc_html( $section_label ); ?></h3>
+            <div class="mk-color-grid">
+                <?php foreach ( $section_keys as $key => $label ) : ?>
+                <div class="mk-color-cell">
+                    <label for="mk_pal_<?php echo esc_attr( $idx ); ?>_<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></label>
+                    <input type="text"
+                        id="mk_pal_<?php echo esc_attr( $idx ); ?>_<?php echo esc_attr( $key ); ?>"
+                        name="mk_admin_theme_palettes[<?php echo esc_attr( $idx ); ?>][<?php echo esc_attr( $key ); ?>]"
+                        value="<?php echo esc_attr( $is_tpl ? ( $pal_defaults[ $key ] ?? '' ) : ( $palette[ $key ] ?? $pal_defaults[ $key ] ?? '' ) ); ?>"
+                        class="mk-color-picker"
+                        data-default-color="<?php echo esc_attr( $pal_defaults[ $key ] ?? '' ); ?>"
+                    />
+                    <?php if ( $key === 'postbox_header_bg' ) : ?>
+                        <p class="description" style="margin-top:4px;"><?php esc_html_e( 'Vuoto = colore primario.', 'mk-admin-theme' ); ?></p>
+                    <?php endif; ?>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endforeach; ?>
+
+        <table class="form-table" role="presentation" style="max-width:860px;margin:4px 0 8px;">
+            <tr>
+                <th scope="row"><label for="mk_pal_<?php echo esc_attr( $idx ); ?>_postbox_header_padding"><?php esc_html_e( 'Padding postbox (px)', 'mk-admin-theme' ); ?></label></th>
+                <td><input type="number"
+                    id="mk_pal_<?php echo esc_attr( $idx ); ?>_postbox_header_padding"
+                    name="mk_admin_theme_palettes[<?php echo esc_attr( $idx ); ?>][postbox_header_padding]"
+                    value="<?php echo esc_attr( $is_tpl ? '6' : ( $palette['postbox_header_padding'] ?? '6' ) ); ?>"
+                    min="0" max="50" step="1" class="small-text" /></td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="mk_pal_<?php echo esc_attr( $idx ); ?>_border_radius"><?php esc_html_e( 'Raggio bordo (px)', 'mk-admin-theme' ); ?></label></th>
+                <td>
+                    <input type="number"
+                        id="mk_pal_<?php echo esc_attr( $idx ); ?>_border_radius"
+                        name="mk_admin_theme_palettes[<?php echo esc_attr( $idx ); ?>][border_radius]"
+                        value="<?php echo esc_attr( $is_tpl ? '5' : ( $palette['border_radius'] ?? '5' ) ); ?>"
+                        min="0" max="50" step="1" class="small-text" />
+                    <p class="description"><?php esc_html_e( 'Default: 5. Imposta 0 per angoli netti.', 'mk-admin-theme' ); ?></p>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <?php
+}
+
 function mk_admin_theme_settings_page() {
     if ( ! current_user_can( 'manage_options' ) ) {
         return;
     }
 
-    $fields = [
+    $color_sections = [
         __( 'Generali', 'mk-admin-theme' ) => [
-            'bg_base'           => __( 'Sfondo pagina (grigio base)', 'mk-admin-theme' ),
-            'color_primary'     => __( 'Colore primario (blu)', 'mk-admin-theme' ),
-            'color_accent'      => __( 'Colore accento (giallo)', 'mk-admin-theme' ),
-            'color_accent_text' => __( 'Testo su sfondo accento', 'mk-admin-theme' ),
-            'color_link'        => __( 'Colore link (area contenuto)', 'mk-admin-theme' ),
+            'bg_base'           => __( 'Sfondo pagina', 'mk-admin-theme' ),
+            'color_primary'     => __( 'Colore primario', 'mk-admin-theme' ),
+            'color_accent'      => __( 'Colore accento', 'mk-admin-theme' ),
+            'color_accent_text' => __( 'Testo su accento', 'mk-admin-theme' ),
+            'color_link'        => __( 'Colore link', 'mk-admin-theme' ),
         ],
-        __( 'Barra superiore (Toolbar)', 'mk-admin-theme' ) => [
+        __( 'Barra superiore', 'mk-admin-theme' ) => [
             'bg_topbar'   => __( 'Sfondo toolbar', 'mk-admin-theme' ),
             'text_topbar' => __( 'Testo toolbar', 'mk-admin-theme' ),
         ],
@@ -422,172 +600,57 @@ function mk_admin_theme_settings_page() {
             'color_button_secondary_bg'   => __( 'Bottone secondario – sfondo', 'mk-admin-theme' ),
             'color_button_secondary_text' => __( 'Bottone secondario – testo', 'mk-admin-theme' ),
         ],
+        __( 'Intestazione Postbox', 'mk-admin-theme' ) => [
+            'postbox_header_bg'   => __( 'Sfondo intestazione', 'mk-admin-theme' ),
+            'postbox_header_text' => __( 'Testo intestazione', 'mk-admin-theme' ),
+        ],
     ];
-    $defaults = mk_admin_theme_defaults();
+
+    $pal_defaults = mk_admin_theme_default_palette_values();
+    $palettes     = mk_admin_theme_get_palettes();
+    $active_idx   = (int) mk_admin_theme_get( 'active_palette' );
     ?>
     <div class="wrap">
         <h1><?php esc_html_e( 'Impostazioni tema admin', 'mk-admin-theme' ); ?></h1>
         <p><?php esc_html_e( 'Personalizza colori e stile della dashboard WordPress.', 'mk-admin-theme' ); ?></p>
 
         <style>
-        .mk-color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 48px; max-width: 860px; margin: 12px 0 24px; }
+        .mk-color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 48px; max-width: 860px; margin: 8px 0 16px; }
         .mk-color-cell > label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; }
-        .mk-palette-box { background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; padding: 16px 20px 4px; margin-bottom: 24px; }
-        .mk-palette-box > h2 { margin-top: 0; display: flex; align-items: center; gap: 12px; }
-        .mk-palette-box > h2 input { font-size: 14px; font-weight: normal; }
+        #mk-palette-tabs { display: flex; align-items: flex-end; gap: 0; border-bottom: 1px solid #ccc; flex-wrap: wrap; margin-bottom: 0; }
+        .mk-tab { background: #f0f0f1; border: 1px solid #ccc; border-bottom: none; border-radius: 3px 3px 0 0; padding: 7px 16px; margin-right: 4px; cursor: pointer; font-size: 13px; font-weight: 600; position: relative; bottom: -1px; }
+        .mk-tab.mk-tab-active { background: #fff; border-bottom-color: #fff; color: #0073aa; }
+        .mk-tab:hover:not(.mk-tab-active) { background: #e4e4e4; }
+        .mk-palette-panel { background: #fff; border: 1px solid #ccc; border-top: none; padding: 20px 24px 12px; margin-bottom: 24px; }
+        .mk-palette-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #eee; flex-wrap: wrap; }
+        .mk-palette-name-row { display: flex; align-items: center; gap: 8px; }
+        .mk-palette-name-row label { font-weight: 600; white-space: nowrap; }
+        .mk-palette-actions { display: flex; align-items: center; gap: 20px; }
         </style>
 
         <form method="post" action="options.php">
             <?php settings_fields( 'mk_admin_theme_group' ); ?>
 
-            <!-- Active palette switcher -->
-            <h2><?php esc_html_e( 'Palette attiva', 'mk-admin-theme' ); ?></h2>
-            <table class="form-table" role="presentation">
-                <tr>
-                    <th scope="row"><?php esc_html_e( 'Palette in uso', 'mk-admin-theme' ); ?></th>
-                    <td>
-                        <label style="margin-right:24px;">
-                            <input type="radio" name="mk_admin_theme_options[active_palette]" value="1"
-                                <?php checked( mk_admin_theme_get( 'active_palette' ), '1' ); ?> />
-                            <?php esc_html_e( 'Palette 1', 'mk-admin-theme' ); ?>
-                        </label>
-                        <label>
-                            <input type="radio" name="mk_admin_theme_options[active_palette]" value="2"
-                                <?php checked( mk_admin_theme_get( 'active_palette' ), '2' ); ?> />
-                            <?php echo esc_html( mk_admin_theme_get( 'palette2_name' ) ?: __( 'Palette 2', 'mk-admin-theme' ) ); ?>
-                        </label>
-                    </td>
-                </tr>
-            </table>
-
-            <!-- Palette 1 -->
-            <div class="mk-palette-box">
-                <h2><?php esc_html_e( 'Palette 1', 'mk-admin-theme' ); ?></h2>
-
-                <?php foreach ( $fields as $section => $section_fields ) : ?>
-                    <h3><?php echo esc_html( $section ); ?></h3>
-                    <div class="mk-color-grid">
-                        <?php foreach ( $section_fields as $key => $label ) : ?>
-                        <div class="mk-color-cell">
-                            <label for="mk_<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></label>
-                            <input
-                                type="text"
-                                id="mk_<?php echo esc_attr( $key ); ?>"
-                                name="mk_admin_theme_options[<?php echo esc_attr( $key ); ?>]"
-                                value="<?php echo esc_attr( mk_admin_theme_get( $key ) ); ?>"
-                                class="mk-color-picker"
-                                data-default-color="<?php echo esc_attr( $defaults[ $key ] ?? '#000000' ); ?>"
-                            />
-                        </div>
-                        <?php endforeach; ?>
-                    </div>
+            <!-- Palette tabs + panels -->
+            <h2 style="margin-bottom:0;"><?php esc_html_e( 'Palette', 'mk-admin-theme' ); ?></h2>
+            <div id="mk-palette-tabs">
+                <?php foreach ( $palettes as $i => $pal ) : ?>
+                <button type="button" class="mk-tab<?php echo $i === 0 ? ' mk-tab-active' : ''; ?>" data-idx="<?php echo esc_attr( $i ); ?>">
+                    <?php echo esc_html( $pal['name'] ?: 'Palette ' . ( $i + 1 ) ); ?>
+                </button>
                 <?php endforeach; ?>
-
-                <h3><?php esc_html_e( 'Intestazione Postbox', 'mk-admin-theme' ); ?></h3>
-                <div class="mk-color-grid">
-                    <div class="mk-color-cell">
-                        <label for="mk_postbox_header_bg"><?php esc_html_e( 'Sfondo intestazione', 'mk-admin-theme' ); ?></label>
-                        <input type="text" id="mk_postbox_header_bg" name="mk_admin_theme_options[postbox_header_bg]"
-                            value="<?php echo esc_attr( mk_admin_theme_get( 'postbox_header_bg' ) ); ?>"
-                            class="mk-color-picker" data-default-color="" />
-                        <p class="description" style="margin-top:4px;"><?php esc_html_e( 'Vuoto = colore primario.', 'mk-admin-theme' ); ?></p>
-                    </div>
-                    <div class="mk-color-cell">
-                        <label for="mk_postbox_header_text"><?php esc_html_e( 'Testo intestazione', 'mk-admin-theme' ); ?></label>
-                        <input type="text" id="mk_postbox_header_text" name="mk_admin_theme_options[postbox_header_text]"
-                            value="<?php echo esc_attr( mk_admin_theme_get( 'postbox_header_text' ) ); ?>"
-                            class="mk-color-picker" data-default-color="#ffffff" />
-                    </div>
-                </div>
-
-                <table class="form-table" role="presentation" style="max-width:860px;margin-top:0;">
-                    <tr>
-                        <th scope="row"><label for="mk_postbox_header_padding"><?php esc_html_e( 'Padding verticale postbox (px)', 'mk-admin-theme' ); ?></label></th>
-                        <td>
-                            <input type="number" id="mk_postbox_header_padding" name="mk_admin_theme_options[postbox_header_padding]"
-                                value="<?php echo esc_attr( mk_admin_theme_get( 'postbox_header_padding' ) ); ?>"
-                                min="0" max="50" step="1" class="small-text" />
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><label for="mk_border_radius"><?php esc_html_e( 'Raggio bordo (px)', 'mk-admin-theme' ); ?></label></th>
-                        <td>
-                            <input type="number" id="mk_border_radius" name="mk_admin_theme_options[border_radius]"
-                                value="<?php echo esc_attr( mk_admin_theme_get( 'border_radius' ) ); ?>"
-                                min="0" max="50" step="1" class="small-text" />
-                            <p class="description"><?php esc_html_e( 'Valore predefinito: 5. Imposta 0 per angoli netti.', 'mk-admin-theme' ); ?></p>
-                        </td>
-                    </tr>
-                </table>
+                <button type="button" id="mk-palette-add" class="button" style="margin-left:8px;border-radius:3px 3px 0 0;border-bottom:none;position:relative;bottom:-1px;">
+                    + <?php esc_html_e( 'Aggiungi palette', 'mk-admin-theme' ); ?>
+                </button>
             </div>
 
-            <!-- Palette 2 -->
-            <div class="mk-palette-box">
-                <h2>
-                    <span><?php esc_html_e( 'Palette 2 —', 'mk-admin-theme' ); ?></span>
-                    <input type="text" name="mk_admin_theme_options[palette2_name]"
-                        value="<?php echo esc_attr( mk_admin_theme_get( 'palette2_name' ) ); ?>"
-                        placeholder="<?php esc_attr_e( 'Nome palette', 'mk-admin-theme' ); ?>"
-                        class="regular-text" />
-                </h2>
+            <?php foreach ( $palettes as $i => $pal ) : ?>
+                <?php mk_admin_theme_render_palette_panel( $i, $pal, $color_sections, $pal_defaults, $active_idx ); ?>
+            <?php endforeach; ?>
 
-                <?php foreach ( $fields as $section => $section_fields ) : ?>
-                    <h3><?php echo esc_html( $section ); ?></h3>
-                    <div class="mk-color-grid">
-                        <?php foreach ( $section_fields as $key => $label ) : ?>
-                        <?php $p2k = 'p2_' . $key; ?>
-                        <div class="mk-color-cell">
-                            <label for="mk_<?php echo esc_attr( $p2k ); ?>"><?php echo esc_html( $label ); ?></label>
-                            <input
-                                type="text"
-                                id="mk_<?php echo esc_attr( $p2k ); ?>"
-                                name="mk_admin_theme_options[<?php echo esc_attr( $p2k ); ?>]"
-                                value="<?php echo esc_attr( mk_admin_theme_get( $p2k ) ); ?>"
-                                class="mk-color-picker"
-                                data-default-color="<?php echo esc_attr( $defaults[ $p2k ] ?? '#000000' ); ?>"
-                            />
-                        </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endforeach; ?>
-
-                <h3><?php esc_html_e( 'Intestazione Postbox', 'mk-admin-theme' ); ?></h3>
-                <div class="mk-color-grid">
-                    <div class="mk-color-cell">
-                        <label for="mk_p2_postbox_header_bg"><?php esc_html_e( 'Sfondo intestazione', 'mk-admin-theme' ); ?></label>
-                        <input type="text" id="mk_p2_postbox_header_bg" name="mk_admin_theme_options[p2_postbox_header_bg]"
-                            value="<?php echo esc_attr( mk_admin_theme_get( 'p2_postbox_header_bg' ) ); ?>"
-                            class="mk-color-picker" data-default-color="" />
-                        <p class="description" style="margin-top:4px;"><?php esc_html_e( 'Vuoto = colore primario.', 'mk-admin-theme' ); ?></p>
-                    </div>
-                    <div class="mk-color-cell">
-                        <label for="mk_p2_postbox_header_text"><?php esc_html_e( 'Testo intestazione', 'mk-admin-theme' ); ?></label>
-                        <input type="text" id="mk_p2_postbox_header_text" name="mk_admin_theme_options[p2_postbox_header_text]"
-                            value="<?php echo esc_attr( mk_admin_theme_get( 'p2_postbox_header_text' ) ); ?>"
-                            class="mk-color-picker" data-default-color="#ffffff" />
-                    </div>
-                </div>
-
-                <table class="form-table" role="presentation" style="max-width:860px;margin-top:0;">
-                    <tr>
-                        <th scope="row"><label for="mk_p2_postbox_header_padding"><?php esc_html_e( 'Padding verticale postbox (px)', 'mk-admin-theme' ); ?></label></th>
-                        <td>
-                            <input type="number" id="mk_p2_postbox_header_padding" name="mk_admin_theme_options[p2_postbox_header_padding]"
-                                value="<?php echo esc_attr( mk_admin_theme_get( 'p2_postbox_header_padding' ) ); ?>"
-                                min="0" max="50" step="1" class="small-text" />
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><label for="mk_p2_border_radius"><?php esc_html_e( 'Raggio bordo (px)', 'mk-admin-theme' ); ?></label></th>
-                        <td>
-                            <input type="number" id="mk_p2_border_radius" name="mk_admin_theme_options[p2_border_radius]"
-                                value="<?php echo esc_attr( mk_admin_theme_get( 'p2_border_radius' ) ); ?>"
-                                min="0" max="50" step="1" class="small-text" />
-                            <p class="description"><?php esc_html_e( 'Valore predefinito: 5. Imposta 0 per angoli netti.', 'mk-admin-theme' ); ?></p>
-                        </td>
-                    </tr>
-                </table>
-            </div>
+            <script type="text/template" id="mk-palette-tpl">
+                <?php mk_admin_theme_render_palette_panel( '__IDX__', $pal_defaults, $color_sections, $pal_defaults, -1 ); ?>
+            </script>
 
             <!-- Integrations -->
             <h2><?php esc_html_e( 'Integrazioni', 'mk-admin-theme' ); ?></h2>
@@ -1623,53 +1686,34 @@ add_action( 'current_screen', 'mk_admin_theme_restrict_blocks_patterns' );
 // ──────────────────────────────────────────────────────────────────────────────
 
 function mk_admin_theme_user_palette_picker( $user ) {
-    $current = get_user_option( 'mk_admin_theme_palette', $user->ID );
-    if ( ! $current ) {
-        $current = mk_admin_theme_get( 'active_palette' );
-    }
-
-    $palettes = [
-        '1' => [
-            'name'   => __( 'Palette 1', 'mk-admin-theme' ),
-            'colors' => [
-                mk_admin_theme_get( 'bg_menu' ),
-                mk_admin_theme_get( 'bg_topbar' ),
-                mk_admin_theme_get( 'color_primary' ),
-                mk_admin_theme_get( 'color_accent' ),
-            ],
-        ],
-        '2' => [
-            'name'   => mk_admin_theme_get( 'palette2_name' ) ?: __( 'Palette 2', 'mk-admin-theme' ),
-            'colors' => [
-                mk_admin_theme_get( 'p2_bg_menu' ),
-                mk_admin_theme_get( 'p2_bg_topbar' ),
-                mk_admin_theme_get( 'p2_color_primary' ),
-                mk_admin_theme_get( 'p2_color_accent' ),
-            ],
-        ],
-    ];
+    $saved   = get_user_option( 'mk_admin_theme_palette', $user->ID );
+    $current = ( $saved !== false && $saved !== '' ) ? (int) $saved : (int) mk_admin_theme_get( 'active_palette' );
+    $palettes = mk_admin_theme_get_palettes();
     ?>
     <tr class="mk-user-palette-wrap">
         <th scope="row"><?php esc_html_e( 'Tema admin', 'mk-admin-theme' ); ?></th>
         <td>
             <fieldset>
                 <legend class="screen-reader-text"><span><?php esc_html_e( 'Tema admin', 'mk-admin-theme' ); ?></span></legend>
-                <?php foreach ( $palettes as $id => $palette ) : ?>
+                <?php foreach ( $palettes as $idx => $palette ) : ?>
                 <div class="mk-palette-choice">
                     <input
                         type="radio"
                         name="mk_admin_theme_palette"
-                        id="mk-palette-<?php echo esc_attr( $id ); ?>"
-                        value="<?php echo esc_attr( $id ); ?>"
-                        <?php checked( $current, $id ); ?>
+                        id="mk-palette-<?php echo esc_attr( $idx ); ?>"
+                        value="<?php echo esc_attr( $idx ); ?>"
+                        <?php checked( $current, $idx ); ?>
                     />
-                    <label for="mk-palette-<?php echo esc_attr( $id ); ?>">
+                    <label for="mk-palette-<?php echo esc_attr( $idx ); ?>">
                         <span class="mk-palette-swatches" aria-hidden="true">
-                            <?php foreach ( $palette['colors'] as $color ) : ?>
-                                <span style="background:<?php echo esc_attr( $color ?: '#013162' ); ?>;"></span>
+                            <?php
+                            foreach ( [ 'bg_menu', 'bg_topbar', 'color_primary', 'color_accent' ] as $ck ) :
+                                $c = $palette[ $ck ] ?? '#013162';
+                            ?>
+                                <span style="background:<?php echo esc_attr( $c ?: '#013162' ); ?>;"></span>
                             <?php endforeach; ?>
                         </span>
-                        <?php echo esc_html( $palette['name'] ); ?>
+                        <?php echo esc_html( $palette['name'] ?: 'Palette ' . ( $idx + 1 ) ); ?>
                     </label>
                 </div>
                 <?php endforeach; ?>
@@ -1685,9 +1729,9 @@ function mk_admin_theme_save_user_palette( $user_id ) {
         return;
     }
     if ( isset( $_POST['mk_admin_theme_palette'] ) ) {
-        $value = in_array( $_POST['mk_admin_theme_palette'], [ '1', '2' ], true )
-            ? $_POST['mk_admin_theme_palette'] : '1';
-        update_user_option( $user_id, 'mk_admin_theme_palette', $value );
+        $max   = max( 0, count( mk_admin_theme_get_palettes() ) - 1 );
+        $value = max( 0, min( $max, (int) $_POST['mk_admin_theme_palette'] ) );
+        update_user_option( $user_id, 'mk_admin_theme_palette', (string) $value );
     }
 }
 add_action( 'personal_options_update',  'mk_admin_theme_save_user_palette' );
